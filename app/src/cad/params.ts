@@ -45,7 +45,14 @@ export interface KnobParams {
   shaftClearance: number;
   /** Depth of the shaft socket measured from the bottom face (mm). */
   shaftHoleDepth: number;
+  /** Treatment applied to the top rim edge. */
+  topEdgeStyle: TopEdgeStyle;
+  /** Chamfer width / fillet radius for the top rim (mm). */
+  topEdgeSize: number;
 }
+
+/** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
+export type TopEdgeStyle = "none" | "chamfer" | "fillet";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -53,6 +60,8 @@ export const DEFAULT_PARAMS: KnobParams = {
   bodyHeight: 16,
   shaftClearance: 0.15,
   shaftHoleDepth: 12,
+  topEdgeStyle: "chamfer",
+  topEdgeSize: 1.5,
 };
 
 /** Minimum wall thickness we keep around the shaft socket and above it (mm). */
@@ -74,4 +83,16 @@ export function minBodyDiameter(params: KnobParams): number {
 /** Deepest socket that still leaves MIN_WALL of material under the top (mm). */
 export function maxShaftHoleDepth(params: KnobParams): number {
   return Math.max(2, params.bodyHeight - MIN_WALL);
+}
+
+/**
+ * Largest chamfer width / fillet radius for the top rim (mm).
+ * Bounded radially so the cut can never reach the shaft socket
+ * (keeps a margin outside the socket radius), and vertically so a
+ * reasonable straight flank remains.
+ */
+export function maxTopEdgeSize(params: KnobParams): number {
+  const radial = params.bodyDiameter / 2 - shaftSocketRadius(params) - 0.2;
+  const vertical = params.bodyHeight * 0.45;
+  return Math.max(0, Math.floor(Math.min(radial, vertical) * 10) / 10);
 }
