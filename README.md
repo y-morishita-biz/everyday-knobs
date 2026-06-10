@@ -183,9 +183,11 @@ app/src/
 ```
 everyday-knobs/
 ├── README.md                 … このファイル（プロジェクトの方針・ゴール）
+├── CLAUDE.md                 … 開発ガイド＆「1日1ノブ」作業手順（毎機能で反芻）
 ├── app/                      … ジェネレーター本体（Vite + React + TS + Replicad）
 ├── docs/
-│   └── requirements_v1.md    … 要件定義書 v1
+│   ├── requirements_v1.md    … 要件定義書 v1
+│   └── devlog.md             … まいにちのぶ 開発ログ（#まいにちのぶ）
 └── reference/                … 対象エンコーダの一次資料（寸法・形状の「正」）
     ├── README.md             … リファレンスの索引・出典・注意事項
     ├── alps-usage-notice.rtf … ALPS配布CAD同梱の利用上の注意
