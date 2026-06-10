@@ -2,9 +2,17 @@ import {
   SHAFTS,
   minBodyDiameter,
   maxShaftHoleDepth,
+  maxTopEdgeSize,
   type KnobParams,
   type ShaftType,
+  type TopEdgeStyle,
 } from "../cad/params";
+
+const TOP_EDGE_LABELS: Record<TopEdgeStyle, string> = {
+  none: "なし",
+  chamfer: "面取り（チャンファ）",
+  fillet: "丸め（フィレット）",
+};
 
 interface ControlsProps {
   params: KnobParams;
@@ -52,11 +60,14 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
     if (next.bodyDiameter < minDia) next.bodyDiameter = minDia;
     const maxDepth = maxShaftHoleDepth(next);
     if (next.shaftHoleDepth > maxDepth) next.shaftHoleDepth = maxDepth;
+    const maxEdge = maxTopEdgeSize(next);
+    if (next.topEdgeSize > maxEdge) next.topEdgeSize = maxEdge;
     onChange(next);
   };
 
   const minDia = minBodyDiameter(params);
   const maxDepth = maxShaftHoleDepth(params);
+  const maxEdge = maxTopEdgeSize(params);
 
   return (
     <aside className="panel">
@@ -96,6 +107,31 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
           step={1}
           onChange={(v) => set({ bodyHeight: v })}
         />
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">天面エッジ</h2>
+        <div className="toggle">
+          {(Object.keys(TOP_EDGE_LABELS) as TopEdgeStyle[]).map((style) => (
+            <button
+              key={style}
+              className={`toggle__btn${params.topEdgeStyle === style ? " is-active" : ""}`}
+              onClick={() => set({ topEdgeStyle: style })}
+            >
+              {TOP_EDGE_LABELS[style]}
+            </button>
+          ))}
+        </div>
+        {params.topEdgeStyle !== "none" && (
+          <Slider
+            label={params.topEdgeStyle === "chamfer" ? "面取り幅" : "丸め半径"}
+            value={params.topEdgeSize}
+            min={0.2}
+            max={maxEdge}
+            step={0.1}
+            onChange={(v) => set({ topEdgeSize: v })}
+          />
+        )}
       </section>
 
       <section className="group">

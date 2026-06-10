@@ -1,6 +1,11 @@
 import { drawCircle, drawRoundedRectangle, makeCylinder } from "replicad";
 import type { Solid } from "replicad";
-import { SHAFTS, maxShaftHoleDepth, type KnobParams } from "./params";
+import {
+  SHAFTS,
+  maxShaftHoleDepth,
+  maxTopEdgeSize,
+  type KnobParams,
+} from "./params";
 
 /**
  * Build the shaft socket as a 2D profile on the XY plane, then extrude it.
@@ -28,9 +33,24 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
     .translate([0, 0, -0.1]) as Solid;
 }
 
+/**
+ * Apply the top rim treatment to the plain body. Done before the socket cut
+ * so the edge filter only ever sees the cylinder's own top edge.
+ */
+function applyTopEdge(body: Solid, params: KnobParams): Solid {
+  const size = Math.min(params.topEdgeSize, maxTopEdgeSize(params));
+  if (params.topEdgeStyle === "none" || size <= 0) return body;
+  const topEdge = (e: import("replicad").EdgeFinder) =>
+    e.inPlane("XY", params.bodyHeight);
+  return params.topEdgeStyle === "chamfer"
+    ? (body.chamfer(size, topEdge) as Solid)
+    : (body.fillet(size, topEdge) as Solid);
+}
+
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
-  const body = makeCylinder(params.bodyDiameter / 2, params.bodyHeight);
+  let body = makeCylinder(params.bodyDiameter / 2, params.bodyHeight) as Solid;
+  body = applyTopEdge(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   return body.cut(socket);

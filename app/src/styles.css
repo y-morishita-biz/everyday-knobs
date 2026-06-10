@@ -94,6 +94,10 @@ body {
   margin-bottom: 14px;
 }
 
+.toggle + .slider {
+  margin-top: 12px;
+}
+
 .slider__row {
   display: flex;
   justify-content: space-between;
