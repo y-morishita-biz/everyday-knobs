@@ -24,6 +24,8 @@
 reference/
 ├── README.md                       … このファイル
 ├── alps-usage-notice.rtf           … ALPS 配布CADに同梱の「ご利用になる前に」利用上の注意
+├── knob_design_samples/            … 実装目標のデザインサンプル画像＋形状分析
+│   └── README.md                   … 全17枚の分解・パラメータ体系・実装優先順
 └── encoders/
     ├── EC1110120005/
     │   ├── EC1110120005.pdf         … メーカー配布の3D PDF（寸法注記なし・3Dビューのみ）
