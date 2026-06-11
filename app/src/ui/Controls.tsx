@@ -2,9 +2,12 @@ import {
   SHAFTS,
   minBodyDiameter,
   maxFluteDepth,
+  maxIndicatorDepth,
+  maxIndicatorReach,
   maxShaftHoleDepth,
   maxTopEdgeSize,
   maxTopRecessDepth,
+  maxTopRimWidth,
   type IndicatorType,
   type KnobParams,
   type ShaftType,
@@ -89,6 +92,12 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
     if (next.topRecessDepth > maxRecess) next.topRecessDepth = maxRecess;
     const maxFlute = maxFluteDepth(next);
     if (next.fluteDepth > maxFlute) next.fluteDepth = maxFlute;
+    const maxRim = maxTopRimWidth(next);
+    if (next.topRimWidth > maxRim) next.topRimWidth = maxRim;
+    const maxIndDepth = maxIndicatorDepth(next);
+    if (next.indicatorDepth > maxIndDepth) next.indicatorDepth = maxIndDepth;
+    const maxReach = maxIndicatorReach(next);
+    if (next.indicatorReach > maxReach) next.indicatorReach = maxReach;
     onChange(next);
   };
 
@@ -97,6 +106,9 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
   const maxEdge = maxTopEdgeSize(params);
   const maxRecess = maxTopRecessDepth(params);
   const maxFlute = maxFluteDepth(params);
+  const maxRim = maxTopRimWidth(params);
+  const maxIndDepth = maxIndicatorDepth(params);
+  const maxReach = maxIndicatorReach(params);
 
   return (
     <aside className="panel">
@@ -185,14 +197,24 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
           ))}
         </div>
         {params.topStyle !== "flat" && (
-          <Slider
-            label={params.topStyle === "recess" ? "凹み深さ" : "すり鉢深さ"}
-            value={params.topRecessDepth}
-            min={0.4}
-            max={Math.max(0.4, maxRecess)}
-            step={0.1}
-            onChange={(v) => set({ topRecessDepth: v })}
-          />
+          <>
+            <Slider
+              label={params.topStyle === "recess" ? "凹み深さ" : "すり鉢深さ"}
+              value={params.topRecessDepth}
+              min={0.4}
+              max={Math.max(0.4, maxRecess)}
+              step={0.1}
+              onChange={(v) => set({ topRecessDepth: v })}
+            />
+            <Slider
+              label="縁の幅"
+              value={params.topRimWidth}
+              min={0.5}
+              max={maxRim}
+              step={0.1}
+              onChange={(v) => set({ topRimWidth: v })}
+            />
+          </>
         )}
         {maxRecess < 0.4 && params.topStyle !== "flat" && (
           <p className="hint">軸穴を浅くすると凹みを深くできます</p>
@@ -231,6 +253,15 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
               step={0.1}
               onChange={(v) => set({ fluteDepth: v })}
             />
+            <Slider
+              label="溝の太さ"
+              value={params.fluteWidthPercent}
+              min={40}
+              max={120}
+              step={5}
+              unit="%"
+              onChange={(v) => set({ fluteWidthPercent: v })}
+            />
           </>
         )}
       </section>
@@ -257,6 +288,22 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
               max={params.indicator === "line" ? 2.5 : 4}
               step={0.1}
               onChange={(v) => set({ indicatorSize: v })}
+            />
+            <Slider
+              label={params.indicator === "line" ? "線の長さ" : "中心からの距離"}
+              value={params.indicatorReach}
+              min={2}
+              max={maxReach}
+              step={0.5}
+              onChange={(v) => set({ indicatorReach: v })}
+            />
+            <Slider
+              label="彫り深さ"
+              value={params.indicatorDepth}
+              min={0.4}
+              max={maxIndDepth}
+              step={0.1}
+              onChange={(v) => set({ indicatorDepth: v })}
             />
             <Slider
               label="位置（角度）"

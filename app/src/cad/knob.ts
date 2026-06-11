@@ -7,13 +7,15 @@ import {
 } from "replicad";
 import type { Sketch, Solid } from "replicad";
 import {
-  INDICATOR_DEPTH,
   SHAFTS,
   flatTopRadius,
   maxFluteDepth,
+  maxIndicatorDepth,
+  maxIndicatorReach,
   maxShaftHoleDepth,
   maxTopEdgeSize,
   maxTopRecessDepth,
+  maxTopRimWidth,
   type KnobParams,
 } from "./params";
 
@@ -76,15 +78,16 @@ function applyTopStyle(body: Solid, params: KnobParams): Solid {
   if (depth <= 0) return body;
   const flatR = flatTopRadius(params);
   const h = params.bodyHeight;
+  const rim = Math.min(params.topRimWidth, maxTopRimWidth(params));
 
   if (params.topStyle === "recess") {
-    const recessR = Math.max(2, flatR - 1.5);
+    const recessR = Math.max(2, flatR - rim);
     const pocket = makeCylinder(recessR, depth + 0.1).translate([0, 0, h - depth]);
     return body.cut(pocket) as Solid;
   }
 
   // dish: cut a sphere sized to give radius `a` and depth `depth` at the top.
-  const a = Math.max(2, flatR - 0.3);
+  const a = Math.max(2, flatR - rim);
   const rho = (a * a + depth * depth) / (2 * depth);
   const sphere = makeSphere(rho).translate([0, 0, h + (rho - depth)]);
   return body.cut(sphere) as Solid;
@@ -95,13 +98,13 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
   if (params.indicator === "none") return body;
   const flatR = flatTopRadius(params);
   const top = params.bodyHeight;
-  // Keep the engraving shallower than the wall above the socket.
-  const wall = top - Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
-  const depth = Math.min(INDICATOR_DEPTH, wall - 0.4);
+  const depth = Math.min(params.indicatorDepth, maxIndicatorDepth(params));
+  const reach = Math.min(params.indicatorReach, maxIndicatorReach(params));
   if (depth <= 0) return body;
 
   if (params.indicator === "line") {
-    const len = flatR + 1; // overshoot the rim for a clean cut
+    // Overshoot the rim only when the line is meant to reach it.
+    const len = reach >= flatR - 0.3 ? flatR + 1 : reach;
     const hz = depth + 0.2;
     const cutter = makeBaseBox(len, params.indicatorSize, hz)
       .translate([len / 2, 0, top + 0.1 - hz / 2])
@@ -109,9 +112,9 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
     return body.cut(cutter) as Solid;
   }
 
-  // dimple: an offset cylindrical pocket near the rim.
+  // dimple: an offset cylindrical pocket at the requested distance.
   const r = params.indicatorSize / 2;
-  const offset = Math.max(0, flatR - r - 1.2);
+  const offset = Math.max(0, reach);
   const a = (params.indicatorAngle * Math.PI) / 180;
   const dimple = makeCylinder(r, depth + 0.1, [
     Math.cos(a) * offset,
@@ -143,7 +146,8 @@ function applyFlutes(body: Solid, params: KnobParams): Solid {
   const topR = params.topDiameter / 2;
   const midZ = zStart + bandHeight / 2;
   const refR = baseR + (topR - baseR) * (midZ / params.bodyHeight);
-  const cutR = Math.max(0.4, ((Math.PI * refR) / n) * 0.85);
+  const widthRatio = Math.min(1.2, Math.max(0.4, params.fluteWidthPercent / 100));
+  const cutR = Math.max(0.3, ((Math.PI * refR) / n) * widthRatio);
   const dist = refR - depth + cutR;
 
   let cutters: Solid | null = null;
