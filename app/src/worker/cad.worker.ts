@@ -31,10 +31,19 @@ function ensureKernel(): Promise<void> {
 }
 
 const api = {
-  async build(params: KnobParams): Promise<MeshPayload> {
+  /**
+   * Build a preview mesh. `draft` builds a cheap version for live interaction:
+   * the expensive side-wall texture is skipped (smooth body) and the mesh is
+   * coarser. The full build (draft = false) carries every feature at fine
+   * tolerance and is run once the parameters settle.
+   */
+  async build(params: KnobParams, draft = false): Promise<MeshPayload> {
     await ensureKernel();
-    const shape = buildKnob(params);
-    const mesh = shape.mesh({ tolerance: 0.05, angularTolerance: 0.3 });
+    const effective: KnobParams = draft ? { ...params, surfaceTexture: "none" } : params;
+    const shape = buildKnob(effective);
+    const mesh = draft
+      ? shape.mesh({ tolerance: 0.12, angularTolerance: 0.6 })
+      : shape.mesh({ tolerance: 0.05, angularTolerance: 0.3 });
     const edges = shape.meshEdges();
 
     const payload: MeshPayload = {

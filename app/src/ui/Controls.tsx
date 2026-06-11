@@ -62,6 +62,7 @@ interface ControlsProps {
   params: KnobParams;
   onChange: (next: KnobParams) => void;
   busy: boolean;
+  busyLabel: string;
   onExport: (format: "stl" | "step") => void;
   onSaveJson: () => void;
   onLoadFile: (file: File) => void;
@@ -105,6 +106,7 @@ export function Controls({
   params,
   onChange,
   busy,
+  busyLabel,
   onExport,
   onSaveJson,
   onLoadFile,
@@ -333,7 +335,9 @@ export function Controls({
           </>
         )}
         {(params.surfaceTexture === "helical" || params.surfaceTexture === "diamond") && (
-          <p className="hint">※ ヘリカル / ダイヤは計算に数秒かかります</p>
+          <p className="hint">
+            ※ 操作中は滑面プレビュー → 手を止めると数秒でテクスチャを仕上げます
+          </p>
         )}
       </section>
 
@@ -504,7 +508,7 @@ export function Controls({
       </section>
 
       <div className={`status${busy ? " is-busy" : ""}`}>
-        {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? "計算中…" : "プレビュー更新済み"}
+        {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
       </div>
     </aside>
   );
