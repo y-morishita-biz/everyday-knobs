@@ -2,6 +2,7 @@ import { useState } from "react";
 import { cad } from "./cad/cadClient";
 import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
 import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
+import { PRESETS, type KnobPreset } from "./cad/presets";
 import { useKnobMesh } from "./cad/useKnobMesh";
 import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
@@ -40,6 +41,16 @@ export default function App() {
       setExporting(false);
     }
   };
+
+  const applyPreset = (preset: KnobPreset) => {
+    setParams(preset.params);
+    flash(`「${preset.name}」を読み込みました`);
+  };
+
+  // Highlight a preset only while the params still match it exactly.
+  const paramsKey = JSON.stringify(params);
+  const activePresetId =
+    PRESETS.find((p) => JSON.stringify(p.params) === paramsKey)?.id ?? null;
 
   const handleSaveJson = () => {
     const blob = new Blob([serializeConfig(params)], { type: "application/json" });
@@ -87,6 +98,8 @@ export default function App() {
         onLoadFile={handleLoadFile}
         onCopyOrder={handleCopyOrder}
         onApplyText={applyText}
+        onPreset={applyPreset}
+        activePresetId={activePresetId}
         error={error}
         notice={notice}
       />
