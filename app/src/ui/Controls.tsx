@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import { PresetGallery } from "./PresetGallery";
+import type { KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
   clampParams,
@@ -68,6 +70,8 @@ interface ControlsProps {
   onLoadFile: (file: File) => void;
   onCopyOrder: () => void;
   onApplyText: (text: string) => void;
+  onPreset: (preset: KnobPreset) => void;
+  activePresetId: string | null;
   error: string | null;
   notice: string | null;
 }
@@ -112,6 +116,8 @@ export function Controls({
   onLoadFile,
   onCopyOrder,
   onApplyText,
+  onPreset,
+  activePresetId,
   error,
   notice,
 }: ControlsProps) {
@@ -137,6 +143,11 @@ export function Controls({
     <aside className="panel">
       <h1 className="panel__title">everyday knobs</h1>
       <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
+
+      <section className="group">
+        <h2 className="group__title">ギャラリー（作例プリセット）</h2>
+        <PresetGallery onPick={onPreset} activeId={activePresetId} />
+      </section>
 
       <section className="group">
         <h2 className="group__title">対象エンコーダ（軸タイプ）</h2>

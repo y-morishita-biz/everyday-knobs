@@ -1,0 +1,135 @@
+// Curated example presets shown in the gallery. Each one is a complete, valid
+// KnobParams (run through clampParams) that showcases a slice of the generator's
+// range — body shape, side texture, top treatment, skirt, and both shaft types.
+
+import { DEFAULT_PARAMS, clampParams, type KnobParams } from "./params";
+
+export interface KnobPreset {
+  id: string;
+  name: string;
+  /** One-line descriptor shown under the name. */
+  note: string;
+  params: KnobParams;
+}
+
+function preset(
+  id: string,
+  name: string,
+  note: string,
+  overrides: Partial<KnobParams>,
+): KnobPreset {
+  return { id, name, note, params: clampParams({ ...DEFAULT_PARAMS, ...overrides }) };
+}
+
+export const PRESETS: KnobPreset[] = [
+  preset("basic", "ベーシック", "丸・面取り・指標", {
+    bodyShape: "round",
+    bodyDiameter: 20,
+    topDiameter: 20,
+    bodyHeight: 16,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1.2,
+    topStyle: "flat",
+    indicator: "line",
+    surfaceTexture: "none",
+  }),
+  preset("fluted", "ローレット円筒", "縦溝28・面取り", {
+    bodyShape: "round",
+    bodyDiameter: 18,
+    topDiameter: 18,
+    bodyHeight: 18,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1,
+    surfaceTexture: "flutes",
+    fluteCount: 28,
+    fluteDepth: 0.6,
+    indicator: "line",
+  }),
+  preset("diamond", "綾目ダイヤ", "ダイヤ目・ディンプル", {
+    bodyShape: "round",
+    bodyDiameter: 20,
+    topDiameter: 20,
+    bodyHeight: 18,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1.2,
+    surfaceTexture: "diamond",
+    fluteCount: 24,
+    knurlAngle: 30,
+    indicator: "dimple",
+  }),
+  preset("dish", "テーパー・ディッシュ", "裾広・すり鉢・点", {
+    bodyShape: "round",
+    bodyDiameter: 26,
+    topDiameter: 18,
+    bodyHeight: 15,
+    topEdgeStyle: "fillet",
+    topEdgeSize: 1.5,
+    topStyle: "dish",
+    topRecessDepth: 2.6,
+    topRimWidth: 1.5,
+    indicator: "dimple",
+  }),
+  preset("flange", "フランジ台座", "裾段・縦溝", {
+    bodyShape: "round",
+    bodyDiameter: 18,
+    topDiameter: 18,
+    bodyHeight: 14,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1,
+    surfaceTexture: "flutes",
+    fluteCount: 24,
+    skirt: "flange",
+    skirtDiameter: 28,
+    skirtHeight: 3,
+    indicator: "line",
+  }),
+  preset("hex", "六角ボルト", "六角・鋭角・面取り", {
+    bodyShape: "polygon",
+    polygonSides: 6,
+    cornerRadius: 0,
+    bodyDiameter: 22,
+    topDiameter: 22,
+    bodyHeight: 14,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1,
+    indicator: "line",
+  }),
+  preset("square", "角丸スクエア", "四角・角丸・リセス", {
+    bodyShape: "polygon",
+    polygonSides: 4,
+    cornerRadius: 3,
+    bodyDiameter: 22,
+    topDiameter: 22,
+    bodyHeight: 16,
+    topEdgeStyle: "none",
+    topStyle: "recess",
+    topRecessDepth: 2,
+    topRimWidth: 2,
+    indicator: "none",
+  }),
+  preset("helical", "ヘリカル・テーパー", "斜め目・裾広", {
+    bodyShape: "round",
+    bodyDiameter: 24,
+    topDiameter: 16,
+    bodyHeight: 18,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1.2,
+    surfaceTexture: "helical",
+    fluteCount: 20,
+    knurlAngle: 25,
+    indicator: "line",
+  }),
+  preset("ec12e", "中空軸スリム", "EC12E・細身・リセス", {
+    shaft: "EC12E",
+    bodyShape: "round",
+    bodyDiameter: 16,
+    topDiameter: 16,
+    bodyHeight: 18,
+    topEdgeStyle: "chamfer",
+    topEdgeSize: 1,
+    topStyle: "recess",
+    topRecessDepth: 1.8,
+    topRimWidth: 1.5,
+    indicator: "line",
+  }),
+];
