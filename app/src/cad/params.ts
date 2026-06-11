@@ -51,10 +51,17 @@ export interface KnobParams {
   topEdgeStyle: TopEdgeStyle;
   /** Chamfer width / fillet radius for the top rim (mm). */
   topEdgeSize: number;
+  /** Treatment applied to the top face. */
+  topStyle: TopStyle;
+  /** Depth of the recess / dish carved into the top face (mm). */
+  topRecessDepth: number;
 }
 
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
 export type TopEdgeStyle = "none" | "chamfer" | "fillet";
+
+/** Day 4: top face treatment — flat, cylindrical recess, or spherical dish. */
+export type TopStyle = "flat" | "recess" | "dish";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -65,6 +72,8 @@ export const DEFAULT_PARAMS: KnobParams = {
   shaftHoleDepth: 12,
   topEdgeStyle: "chamfer",
   topEdgeSize: 1.5,
+  topStyle: "flat",
+  topRecessDepth: 2,
 };
 
 /** Minimum wall thickness we keep around the shaft socket and above it (mm). */
@@ -98,4 +107,22 @@ export function maxTopEdgeSize(params: KnobParams): number {
   const radial = params.topDiameter / 2 - shaftSocketRadius(params) - 0.2;
   const vertical = params.bodyHeight * 0.45;
   return Math.max(0, Math.floor(Math.min(radial, vertical) * 10) / 10);
+}
+
+/** Radius of the flat top face that remains after the rim edge treatment (mm). */
+export function flatTopRadius(params: KnobParams): number {
+  const edge =
+    params.topEdgeStyle === "none"
+      ? 0
+      : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
+  return params.topDiameter / 2 - edge;
+}
+
+/**
+ * Deepest top recess / dish that still leaves MIN_WALL of material between the
+ * bottom of the recess and the top of the shaft socket (mm).
+ */
+export function maxTopRecessDepth(params: KnobParams): number {
+  const room = params.bodyHeight - params.shaftHoleDepth - MIN_WALL;
+  return Math.max(0, Math.floor(room * 10) / 10);
 }

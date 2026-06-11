@@ -3,15 +3,23 @@ import {
   minBodyDiameter,
   maxShaftHoleDepth,
   maxTopEdgeSize,
+  maxTopRecessDepth,
   type KnobParams,
   type ShaftType,
   type TopEdgeStyle,
+  type TopStyle,
 } from "../cad/params";
 
 const TOP_EDGE_LABELS: Record<TopEdgeStyle, string> = {
   none: "なし",
   chamfer: "面取り（チャンファ）",
   fillet: "丸め（フィレット）",
+};
+
+const TOP_STYLE_LABELS: Record<TopStyle, string> = {
+  flat: "フラット",
+  recess: "リセス（一段凹み）",
+  dish: "ディッシュ（すり鉢）",
 };
 
 interface ControlsProps {
@@ -63,12 +71,15 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
     if (next.shaftHoleDepth > maxDepth) next.shaftHoleDepth = maxDepth;
     const maxEdge = maxTopEdgeSize(next);
     if (next.topEdgeSize > maxEdge) next.topEdgeSize = maxEdge;
+    const maxRecess = maxTopRecessDepth(next);
+    if (next.topRecessDepth > maxRecess) next.topRecessDepth = maxRecess;
     onChange(next);
   };
 
   const minDia = minBodyDiameter(params);
   const maxDepth = maxShaftHoleDepth(params);
   const maxEdge = maxTopEdgeSize(params);
+  const maxRecess = maxTopRecessDepth(params);
 
   return (
     <aside className="panel">
@@ -140,6 +151,34 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
             step={0.1}
             onChange={(v) => set({ topEdgeSize: v })}
           />
+        )}
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">天面スタイル</h2>
+        <div className="toggle">
+          {(Object.keys(TOP_STYLE_LABELS) as TopStyle[]).map((style) => (
+            <button
+              key={style}
+              className={`toggle__btn${params.topStyle === style ? " is-active" : ""}`}
+              onClick={() => set({ topStyle: style })}
+            >
+              {TOP_STYLE_LABELS[style]}
+            </button>
+          ))}
+        </div>
+        {params.topStyle !== "flat" && (
+          <Slider
+            label={params.topStyle === "recess" ? "凹み深さ" : "すり鉢深さ"}
+            value={params.topRecessDepth}
+            min={0.4}
+            max={Math.max(0.4, maxRecess)}
+            step={0.1}
+            onChange={(v) => set({ topRecessDepth: v })}
+          />
+        )}
+        {maxRecess < 0.4 && params.topStyle !== "flat" && (
+          <p className="hint">軸穴を浅くすると凹みを深くできます</p>
         )}
       </section>
 
