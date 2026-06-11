@@ -10,6 +10,7 @@ import {
   INDICATOR_DEPTH,
   SHAFTS,
   flatTopRadius,
+  maxFluteDepth,
   maxShaftHoleDepth,
   maxTopEdgeSize,
   maxTopRecessDepth,
@@ -120,12 +121,51 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
   return body.cut(dimple) as Solid;
 }
 
+/** Carve vertical flutes (straight knurl) into the side wall. */
+function applyFlutes(body: Solid, params: KnobParams): Solid {
+  if (params.surfaceTexture !== "flutes") return body;
+  const depth = Math.min(params.fluteDepth, maxFluteDepth(params));
+  if (depth <= 0) return body;
+  const n = Math.round(params.fluteCount);
+
+  // Leave smooth rings: above the base and below the top edge treatment.
+  const edge =
+    params.topEdgeStyle === "none"
+      ? 0
+      : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
+  const bottomMargin = 0.8;
+  const zStart = bottomMargin;
+  const bandHeight = params.bodyHeight - (edge + 0.8) - bottomMargin;
+  if (bandHeight <= 1) return body;
+
+  // Reference radius at the band's mid-height keeps the flute root wall constant.
+  const baseR = params.bodyDiameter / 2;
+  const topR = params.topDiameter / 2;
+  const midZ = zStart + bandHeight / 2;
+  const refR = baseR + (topR - baseR) * (midZ / params.bodyHeight);
+  const cutR = Math.max(0.4, ((Math.PI * refR) / n) * 0.85);
+  const dist = refR - depth + cutR;
+
+  let cutters: Solid | null = null;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI;
+    const c = makeCylinder(cutR, bandHeight + 0.2, [
+      Math.cos(a) * dist,
+      Math.sin(a) * dist,
+      zStart - 0.1,
+    ]) as Solid;
+    cutters = cutters ? (cutters.fuse(c) as Solid) : c;
+  }
+  return cutters ? (body.cut(cutters) as Solid) : body;
+}
+
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
   let body = buildBody(params);
   body = applyTopEdge(body, params);
   body = applyTopStyle(body, params);
   body = applyIndicator(body, params);
+  body = applyFlutes(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   return body.cut(socket);
