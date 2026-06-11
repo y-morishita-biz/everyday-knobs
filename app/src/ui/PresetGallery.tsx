@@ -37,6 +37,31 @@ function PresetGlyph({ p }: { p: KnobParams }) {
     }
   }
 
+  const scale: JSX.Element[] = [];
+  if (p.tickRing === "ticks") {
+    const n = Math.min(p.tickCount, 36);
+    const full = p.tickSpan >= 359.5;
+    const span = (Math.min(360, Math.max(60, p.tickSpan)) * Math.PI) / 180;
+    const step = full ? (2 * Math.PI) / n : span / (n - 1);
+    const begin = full ? -Math.PI / 2 : -Math.PI / 2 - span / 2;
+    for (let i = 0; i < n; i++) {
+      const major = p.tickMajorEvery > 0 && i % p.tickMajorEvery === 0;
+      const a = begin + i * step;
+      const [x1, y1] = at(a, R - (major ? 6 : 3.5));
+      const [x2, y2] = at(a, R - 1);
+      scale.push(
+        <line
+          key={`s${i}`}
+          x1={x1}
+          y1={y1}
+          x2={x2}
+          y2={y2}
+          className={`glyph__tick${major ? " glyph__tick--major" : ""}`}
+        />,
+      );
+    }
+  }
+
   const ia = (p.indicatorAngle * Math.PI) / 180;
   let indicator = null;
   if (p.indicator === "line") {
@@ -53,6 +78,7 @@ function PresetGlyph({ p }: { p: KnobParams }) {
       {p.skirt === "flange" && <circle cx={C} cy={C} r={R + 2.5} className="glyph__skirt" />}
       {outline}
       {ticks}
+      {scale}
       {indicator}
     </svg>
   );

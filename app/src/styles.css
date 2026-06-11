@@ -172,6 +172,11 @@ body {
   opacity: 0.75;
 }
 
+.glyph__tick--major {
+  stroke-width: 1.8;
+  opacity: 1;
+}
+
 .glyph__ind {
   stroke: var(--text);
   stroke-width: 1.6;
