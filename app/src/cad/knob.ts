@@ -13,6 +13,7 @@ import {
   maxIndicatorDepth,
   maxIndicatorReach,
   maxShaftHoleDepth,
+  maxSkirtHeight,
   maxTopEdgeSize,
   maxTopRecessDepth,
   maxTopRimWidth,
@@ -136,9 +137,11 @@ function applyFlutes(body: Solid, params: KnobParams): Solid {
     params.topEdgeStyle === "none"
       ? 0
       : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
-  const bottomMargin = 0.8;
-  const zStart = bottomMargin;
-  const bandHeight = params.bodyHeight - (edge + 0.8) - bottomMargin;
+  // Start the flute band above the skirt so hidden flutes aren't wasted.
+  const skirtTop =
+    params.skirt === "flange" ? Math.min(params.skirtHeight, maxSkirtHeight(params)) : 0;
+  const zStart = Math.max(0.8, skirtTop + 0.4);
+  const bandHeight = params.bodyHeight - (edge + 0.8) - zStart;
   if (bandHeight <= 1) return body;
 
   // Reference radius at the band's mid-height keeps the flute root wall constant.
@@ -163,6 +166,16 @@ function applyFlutes(body: Solid, params: KnobParams): Solid {
   return cutters ? (body.cut(cutters) as Solid) : body;
 }
 
+/** Fuse a wider flange ring at the base. Done after flutes so the skirt face is smooth. */
+function applySkirt(body: Solid, params: KnobParams): Solid {
+  if (params.skirt === "none") return body;
+  const h = Math.min(params.skirtHeight, maxSkirtHeight(params));
+  const r = Math.max(params.bodyDiameter / 2, params.skirtDiameter / 2);
+  if (h <= 0 || r <= params.bodyDiameter / 2 + 0.01) return body;
+  const ring = makeCylinder(r, h) as Solid;
+  return body.fuse(ring) as Solid;
+}
+
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
   let body = buildBody(params);
@@ -170,6 +183,7 @@ export function buildKnob(params: KnobParams): Solid {
   body = applyTopStyle(body, params);
   body = applyIndicator(body, params);
   body = applyFlutes(body, params);
+  body = applySkirt(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   return body.cut(socket);

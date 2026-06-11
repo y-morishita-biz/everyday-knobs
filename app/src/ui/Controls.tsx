@@ -7,16 +7,24 @@ import {
   maxIndicatorDepth,
   maxIndicatorReach,
   maxShaftHoleDepth,
+  maxSkirtHeight,
+  minSkirtDiameter,
   maxTopEdgeSize,
   maxTopRecessDepth,
   maxTopRimWidth,
   type IndicatorType,
   type KnobParams,
   type ShaftType,
+  type SkirtStyle,
   type SurfaceTexture,
   type TopEdgeStyle,
   type TopStyle,
 } from "../cad/params";
+
+const SKIRT_LABELS: Record<SkirtStyle, string> = {
+  none: "なし",
+  flange: "フランジ（裾段）",
+};
 
 const TEXTURE_LABELS: Record<SurfaceTexture, string> = {
   none: "なし（つるつる）",
@@ -110,6 +118,8 @@ export function Controls({
   const maxRim = maxTopRimWidth(params);
   const maxIndDepth = maxIndicatorDepth(params);
   const maxReach = maxIndicatorReach(params);
+  const minSkirt = minSkirtDiameter(params);
+  const maxSkirt = maxSkirtHeight(params);
 
   return (
     <aside className="panel">
@@ -262,6 +272,41 @@ export function Controls({
               step={5}
               unit="%"
               onChange={(v) => set({ fluteWidthPercent: v })}
+            />
+          </>
+        )}
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">スカート（裾）</h2>
+        <div className="toggle">
+          {(Object.keys(SKIRT_LABELS) as SkirtStyle[]).map((s) => (
+            <button
+              key={s}
+              className={`toggle__btn${params.skirt === s ? " is-active" : ""}`}
+              onClick={() => set({ skirt: s })}
+            >
+              {SKIRT_LABELS[s]}
+            </button>
+          ))}
+        </div>
+        {params.skirt === "flange" && (
+          <>
+            <Slider
+              label="裾の径"
+              value={params.skirtDiameter}
+              min={minSkirt}
+              max={70}
+              step={1}
+              onChange={(v) => set({ skirtDiameter: v })}
+            />
+            <Slider
+              label="裾の高さ"
+              value={params.skirtHeight}
+              min={1}
+              max={maxSkirt}
+              step={0.5}
+              onChange={(v) => set({ skirtHeight: v })}
             />
           </>
         )}
