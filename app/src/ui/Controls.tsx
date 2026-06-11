@@ -4,11 +4,18 @@ import {
   maxShaftHoleDepth,
   maxTopEdgeSize,
   maxTopRecessDepth,
+  type IndicatorType,
   type KnobParams,
   type ShaftType,
   type TopEdgeStyle,
   type TopStyle,
 } from "../cad/params";
+
+const INDICATOR_LABELS: Record<IndicatorType, string> = {
+  none: "なし",
+  line: "刻線（ポインター）",
+  dimple: "ディンプル（点）",
+};
 
 const TOP_EDGE_LABELS: Record<TopEdgeStyle, string> = {
   none: "なし",
@@ -179,6 +186,42 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
         )}
         {maxRecess < 0.4 && params.topStyle !== "flat" && (
           <p className="hint">軸穴を浅くすると凹みを深くできます</p>
+        )}
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">指標（天面）</h2>
+        <div className="toggle">
+          {(Object.keys(INDICATOR_LABELS) as IndicatorType[]).map((type) => (
+            <button
+              key={type}
+              className={`toggle__btn${params.indicator === type ? " is-active" : ""}`}
+              onClick={() => set({ indicator: type })}
+            >
+              {INDICATOR_LABELS[type]}
+            </button>
+          ))}
+        </div>
+        {params.indicator !== "none" && (
+          <>
+            <Slider
+              label={params.indicator === "line" ? "線の幅" : "点の径"}
+              value={params.indicatorSize}
+              min={params.indicator === "line" ? 0.6 : 1}
+              max={params.indicator === "line" ? 2.5 : 4}
+              step={0.1}
+              onChange={(v) => set({ indicatorSize: v })}
+            />
+            <Slider
+              label="位置（角度）"
+              value={params.indicatorAngle}
+              min={0}
+              max={360}
+              step={15}
+              unit="°"
+              onChange={(v) => set({ indicatorAngle: v })}
+            />
+          </>
         )}
       </section>
 
