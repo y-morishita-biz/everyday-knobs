@@ -37,8 +37,10 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
 
 export interface KnobParams {
   shaft: ShaftType;
-  /** Outer diameter of the cylindrical body (mm). */
+  /** Outer diameter at the base (bottom) of the body (mm). */
   bodyDiameter: number;
+  /** Outer diameter at the top of the body (mm). Equal to bodyDiameter = straight cylinder. */
+  topDiameter: number;
   /** Total height of the body (mm). */
   bodyHeight: number;
   /** Radial clearance added to the shaft socket for fit (mm). */
@@ -57,6 +59,7 @@ export type TopEdgeStyle = "none" | "chamfer" | "fillet";
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
   bodyDiameter: 20,
+  topDiameter: 20,
   bodyHeight: 16,
   shaftClearance: 0.15,
   shaftHoleDepth: 12,
@@ -87,12 +90,12 @@ export function maxShaftHoleDepth(params: KnobParams): number {
 
 /**
  * Largest chamfer width / fillet radius for the top rim (mm).
- * Bounded radially so the cut can never reach the shaft socket
- * (keeps a margin outside the socket radius), and vertically so a
- * reasonable straight flank remains.
+ * The treatment is applied to the *top* edge, so the radial budget is taken
+ * from the top radius. Bounded so the cut never reaches the shaft socket and
+ * a reasonable straight flank remains.
  */
 export function maxTopEdgeSize(params: KnobParams): number {
-  const radial = params.bodyDiameter / 2 - shaftSocketRadius(params) - 0.2;
+  const radial = params.topDiameter / 2 - shaftSocketRadius(params) - 0.2;
   const vertical = params.bodyHeight * 0.45;
   return Math.max(0, Math.floor(Math.min(radial, vertical) * 10) / 10);
 }

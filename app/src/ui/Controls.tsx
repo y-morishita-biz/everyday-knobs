@@ -58,6 +58,7 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
     // Keep parameters inside the non-degenerate range after any change.
     const minDia = minBodyDiameter(next);
     if (next.bodyDiameter < minDia) next.bodyDiameter = minDia;
+    if (next.topDiameter < minDia) next.topDiameter = minDia;
     const maxDepth = maxShaftHoleDepth(next);
     if (next.shaftHoleDepth > maxDepth) next.shaftHoleDepth = maxDepth;
     const maxEdge = maxTopEdgeSize(next);
@@ -92,12 +93,20 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
       <section className="group">
         <h2 className="group__title">本体</h2>
         <Slider
-          label="本体径"
+          label="本体径（下部）"
           value={params.bodyDiameter}
           min={minDia}
           max={60}
           step={1}
           onChange={(v) => set({ bodyDiameter: v })}
+        />
+        <Slider
+          label="本体径（上部）"
+          value={params.topDiameter}
+          min={minDia}
+          max={60}
+          step={1}
+          onChange={(v) => set({ topDiameter: v })}
         />
         <Slider
           label="本体高さ"
