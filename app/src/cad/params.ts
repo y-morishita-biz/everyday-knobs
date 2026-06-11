@@ -195,3 +195,55 @@ export function maxFluteDepth(params: KnobParams): number {
   const room = midBodyRadius(params) - shaftSocketRadius(params) - 1.0;
   return Math.max(0, Math.min(1.5, Math.floor(room * 10) / 10));
 }
+
+/**
+ * Sanitize an arbitrary (possibly imported / untrusted) parameter object into a
+ * valid KnobParams: fill missing fields from defaults, coerce types, validate
+ * enums, and clamp every value to its non-degenerate range. This is the single
+ * source of truth for parameter validity — used both by live editing and by
+ * JSON / order-code import.
+ */
+export function clampParams(input: Partial<KnobParams>): KnobParams {
+  const d = DEFAULT_PARAMS;
+  const num = (v: unknown, f: number) =>
+    typeof v === "number" && Number.isFinite(v) ? v : f;
+  const cl = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const pick = <T extends string>(v: unknown, allowed: readonly T[], f: T): T =>
+    typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : f;
+
+  const p: KnobParams = {
+    shaft: pick(input.shaft, ["EC11", "EC12E"], d.shaft),
+    bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
+    bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
+    topDiameter: cl(num(input.topDiameter, d.topDiameter), 6, 60),
+    shaftClearance: cl(num(input.shaftClearance, d.shaftClearance), 0, 0.6),
+    shaftHoleDepth: cl(num(input.shaftHoleDepth, d.shaftHoleDepth), 2, 40),
+    topEdgeStyle: pick(input.topEdgeStyle, ["none", "chamfer", "fillet"], d.topEdgeStyle),
+    topEdgeSize: Math.max(0.2, num(input.topEdgeSize, d.topEdgeSize)),
+    topStyle: pick(input.topStyle, ["flat", "recess", "dish"], d.topStyle),
+    topRecessDepth: Math.max(0.4, num(input.topRecessDepth, d.topRecessDepth)),
+    topRimWidth: Math.max(0.5, num(input.topRimWidth, d.topRimWidth)),
+    indicator: pick(input.indicator, ["none", "line", "dimple"], d.indicator),
+    indicatorSize: cl(num(input.indicatorSize, d.indicatorSize), 0.6, 4),
+    indicatorAngle: cl(num(input.indicatorAngle, d.indicatorAngle), 0, 360),
+    indicatorDepth: Math.max(0.4, num(input.indicatorDepth, d.indicatorDepth)),
+    indicatorReach: Math.max(2, num(input.indicatorReach, d.indicatorReach)),
+    surfaceTexture: pick(input.surfaceTexture, ["none", "flutes"], d.surfaceTexture),
+    fluteCount: cl(Math.round(num(input.fluteCount, d.fluteCount)), 8, 48),
+    fluteDepth: Math.max(0.2, num(input.fluteDepth, d.fluteDepth)),
+    fluteWidthPercent: cl(num(input.fluteWidthPercent, d.fluteWidthPercent), 40, 120),
+  };
+
+  // Apply the interdependent dynamic limits in dependency order.
+  const minDia = minBodyDiameter(p);
+  p.bodyDiameter = Math.max(minDia, p.bodyDiameter);
+  p.topDiameter = Math.max(minDia, p.topDiameter);
+  p.shaftHoleDepth = Math.min(p.shaftHoleDepth, maxShaftHoleDepth(p));
+  p.topEdgeSize = Math.min(p.topEdgeSize, maxTopEdgeSize(p));
+  p.topRecessDepth = Math.min(p.topRecessDepth, maxTopRecessDepth(p));
+  p.topRimWidth = Math.min(p.topRimWidth, maxTopRimWidth(p));
+  p.indicatorDepth = Math.min(p.indicatorDepth, maxIndicatorDepth(p));
+  p.indicatorReach = Math.min(p.indicatorReach, maxIndicatorReach(p));
+  p.fluteDepth = Math.min(p.fluteDepth, maxFluteDepth(p));
+  return p;
+}
