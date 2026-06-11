@@ -1,59 +1,43 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { cad } from "./cad/cadClient";
 import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
 import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
-import type { ExportFormat, MeshPayload } from "./worker/cad.worker";
+import { useKnobMesh } from "./cad/useKnobMesh";
+import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
 import { Viewer } from "./viewer/Viewer";
 
 export default function App() {
   const [params, setParams] = useState<KnobParams>(DEFAULT_PARAMS);
-  const [mesh, setMesh] = useState<MeshPayload | null>(null);
-  const [busy, setBusy] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
-  // Monotonic id so out-of-order worker responses are ignored.
-  const requestId = useRef(0);
+  // Preview mesh is driven by a coalescing, two-phase scheduler (see the hook).
+  const { mesh, busy, phase, buildError } = useKnobMesh(params);
+  const error = actionError ?? buildError;
+  const busyLabel = exporting
+    ? "書き出し中…"
+    : phase === "refining"
+      ? "仕上げ中…（テクスチャ生成）"
+      : "プレビュー生成中…";
 
-  // Show a transient success message, clearing any standing error.
+  // Show a transient success message, clearing any standing action error.
   const flash = (msg: string) => {
-    setError(null);
+    setActionError(null);
     setNotice(msg);
     window.setTimeout(() => setNotice((n) => (n === msg ? null : n)), 2500);
   };
 
-  // Rebuild the preview whenever parameters change (debounced for slider drags).
-  useEffect(() => {
-    const id = ++requestId.current;
-    setBusy(true);
-    const timer = setTimeout(async () => {
-      try {
-        const payload = await cad.build(params);
-        if (id === requestId.current) {
-          setMesh(payload);
-          setError(null);
-        }
-      } catch (err) {
-        if (id === requestId.current) {
-          setError(err instanceof Error ? err.message : "生成に失敗しました");
-        }
-      } finally {
-        if (id === requestId.current) setBusy(false);
-      }
-    }, 80);
-    return () => clearTimeout(timer);
-  }, [params]);
-
   const handleExport = async (format: ExportFormat) => {
     try {
-      setBusy(true);
+      setExporting(true);
       const blob = await cad.exportModel(params, format);
       downloadBlob(blob, `knob-${params.shaft}.${format}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "エクスポートに失敗しました");
+      setActionError(err instanceof Error ? err.message : "エクスポートに失敗しました");
     } finally {
-      setBusy(false);
+      setExporting(false);
     }
   };
 
@@ -68,7 +52,7 @@ export default function App() {
       setParams(parseConfig(text));
       flash("設定を読み込みました");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "読み込みに失敗しました");
+      setActionError(err instanceof Error ? err.message : "読み込みに失敗しました");
     }
   };
 
@@ -76,7 +60,7 @@ export default function App() {
     try {
       applyText(await file.text());
     } catch {
-      setError("ファイルを読めませんでした");
+      setActionError("ファイルを読めませんでした");
     }
   };
 
@@ -96,7 +80,8 @@ export default function App() {
       <Controls
         params={params}
         onChange={setParams}
-        busy={busy}
+        busy={busy || exporting}
+        busyLabel={busyLabel}
         onExport={handleExport}
         onSaveJson={handleSaveJson}
         onLoadFile={handleLoadFile}
