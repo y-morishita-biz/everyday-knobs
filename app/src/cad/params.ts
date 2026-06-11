@@ -55,18 +55,26 @@ export interface KnobParams {
   topStyle: TopStyle;
   /** Depth of the recess / dish carved into the top face (mm). */
   topRecessDepth: number;
+  /** Width of the flat rim ring left around a recess / dish (mm). */
+  topRimWidth: number;
   /** Pointer / position indicator on the top face. */
   indicator: IndicatorType;
   /** Line width (line) or dimple diameter (dimple), in mm. */
   indicatorSize: number;
   /** Angular position of the indicator (degrees, 0 = +X / "3 o'clock"). */
   indicatorAngle: number;
+  /** Engraving depth of the indicator (mm). */
+  indicatorDepth: number;
+  /** Radial reach from the center: line length / dimple center distance (mm). */
+  indicatorReach: number;
   /** Side-wall texture. */
   surfaceTexture: SurfaceTexture;
   /** Number of vertical flutes around the side. */
   fluteCount: number;
   /** Radial depth each flute bites into the side (mm). */
   fluteDepth: number;
+  /** Flute cutter size as a percentage of the angular pitch (40–120). */
+  fluteWidthPercent: number;
 }
 
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
@@ -92,16 +100,17 @@ export const DEFAULT_PARAMS: KnobParams = {
   topEdgeSize: 1.5,
   topStyle: "flat",
   topRecessDepth: 2,
+  topRimWidth: 1.5,
   indicator: "line",
   indicatorSize: 1.2,
   indicatorAngle: 90,
+  indicatorDepth: 1.0,
+  indicatorReach: 8.5,
   surfaceTexture: "none",
   fluteCount: 24,
   fluteDepth: 0.6,
+  fluteWidthPercent: 85,
 };
-
-/** Engraving depth of the top-face indicator (mm). */
-export const INDICATOR_DEPTH = 1.0;
 
 /** Minimum wall thickness we keep around the shaft socket and above it (mm). */
 export const MIN_WALL = 1.5;
@@ -152,6 +161,25 @@ export function flatTopRadius(params: KnobParams): number {
 export function maxTopRecessDepth(params: KnobParams): number {
   const room = params.bodyHeight - params.shaftHoleDepth - MIN_WALL;
   return Math.max(0, Math.floor(room * 10) / 10);
+}
+
+/** Widest rim ring that still leaves a ≥2mm-radius depression (mm). */
+export function maxTopRimWidth(params: KnobParams): number {
+  return Math.max(0.5, Math.floor((flatTopRadius(params) - 2) * 10) / 10);
+}
+
+/** Deepest indicator engraving that stays above the shaft socket (mm). */
+export function maxIndicatorDepth(params: KnobParams): number {
+  const wall =
+    params.bodyHeight - Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
+  return Math.max(0.4, Math.min(2.5, Math.floor((wall - 0.4) * 10) / 10));
+}
+
+/** Farthest the indicator can reach from the center (mm). */
+export function maxIndicatorReach(params: KnobParams): number {
+  const flatR = flatTopRadius(params);
+  const margin = params.indicator === "dimple" ? params.indicatorSize / 2 + 0.3 : 0;
+  return Math.max(2, Math.floor((flatR - margin) * 10) / 10);
 }
 
 /** Mid-height body radius — the reference radius for vertical flutes (mm). */
