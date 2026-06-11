@@ -1,5 +1,5 @@
 import { drawCircle, drawRoundedRectangle, makeCylinder } from "replicad";
-import type { Solid } from "replicad";
+import type { Sketch, Solid } from "replicad";
 import {
   SHAFTS,
   maxShaftHoleDepth,
@@ -33,9 +33,21 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
     .translate([0, 0, -0.1]) as Solid;
 }
 
+/** Solid body: a straight cylinder, or a frustum when top and base differ. */
+function buildBody(params: KnobParams): Solid {
+  const baseR = params.bodyDiameter / 2;
+  const topR = params.topDiameter / 2;
+  if (Math.abs(baseR - topR) < 0.01) {
+    return makeCylinder(baseR, params.bodyHeight) as Solid;
+  }
+  const base = drawCircle(baseR).sketchOnPlane("XY", 0) as Sketch;
+  const top = drawCircle(topR).sketchOnPlane("XY", params.bodyHeight) as Sketch;
+  return base.loftWith(top, { ruled: true }) as Solid;
+}
+
 /**
  * Apply the top rim treatment to the plain body. Done before the socket cut
- * so the edge filter only ever sees the cylinder's own top edge.
+ * so the edge filter only ever sees the body's own top edge.
  */
 function applyTopEdge(body: Solid, params: KnobParams): Solid {
   const size = Math.min(params.topEdgeSize, maxTopEdgeSize(params));
@@ -49,7 +61,7 @@ function applyTopEdge(body: Solid, params: KnobParams): Solid {
 
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
-  let body = makeCylinder(params.bodyDiameter / 2, params.bodyHeight) as Solid;
+  let body = buildBody(params);
   body = applyTopEdge(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
