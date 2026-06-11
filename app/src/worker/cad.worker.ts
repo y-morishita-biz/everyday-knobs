@@ -2,7 +2,7 @@ import * as Comlink from "comlink";
 import initOpenCascade from "replicad-opencascadejs/src/replicad_single.js";
 import opencascadeWasmUrl from "replicad-opencascadejs/src/replicad_single.wasm?url";
 import { setOC } from "replicad";
-import { buildKnob } from "../cad/knob";
+import { buildFitTestPiece, buildKnob } from "../cad/knob";
 import type { KnobParams } from "../cad/params";
 
 /** Triangulated mesh + edge lines, ready to feed a Three.js BufferGeometry. */
@@ -65,6 +65,12 @@ const api = {
     await ensureKernel();
     const shape = buildKnob(params);
     return format === "stl" ? shape.blobSTL() : shape.blobSTEP();
+  },
+
+  /** STL of the 5-step clearance fit-test coupon (see buildFitTestPiece). */
+  async exportFitTest(params: KnobParams): Promise<Blob> {
+    await ensureKernel();
+    return buildFitTestPiece(params).blobSTL();
   },
 };
 
