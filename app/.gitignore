@@ -3,3 +3,12 @@ dist
 *.local
 .DS_Store
 node_modules/.tmp
+
+# Ephemeral headless test / perf scripts (never committed)
+perf*.mjs
+smoke*.mjs
+_kb.mjs
+_cfg.mjs
+driver*.mjs
+t*.mjs
+api-check.mjs
