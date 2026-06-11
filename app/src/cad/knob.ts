@@ -187,6 +187,49 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
 }
 
 /**
+ * Engrave a ring of scale ticks just inside the top rim. A full span (360°) is
+ * a closed ring; a smaller span is an arc centred at the top (12 o'clock) with
+ * the gap at the bottom, like a potentiometer dial. Every `tickMajorEvery`-th
+ * tick is drawn longer and wider.
+ */
+function applyTicks(body: Solid, params: KnobParams): Solid {
+  if (params.tickRing === "none") return body;
+  const flatR = flatTopRadius(params);
+  if (flatR < 3.5) return body;
+  const n = Math.round(params.tickCount);
+  if (n < 2) return body;
+
+  const top = params.bodyHeight;
+  const depth = Math.min(0.4, maxIndicatorDepth(params));
+  if (depth <= 0) return body;
+  const hz = depth + 0.2;
+
+  const outerR = flatR - 0.3;
+  const minorLen = Math.max(0.8, Math.min(2.5, flatR * 0.2));
+  const minorW = 0.6;
+  const major = params.tickMajorEvery;
+
+  const full = params.tickSpan >= 359.5;
+  const span = (Math.min(360, Math.max(60, params.tickSpan)) * Math.PI) / 180;
+  // Full ring: n evenly spaced. Arc: n ticks inclusive of both ends, centred up.
+  const step = full ? (2 * Math.PI) / n : span / (n - 1);
+  const start = full ? Math.PI / 2 : Math.PI / 2 + span / 2;
+
+  let cutters: Solid | null = null;
+  for (let i = 0; i < n; i++) {
+    const isMajor = major > 0 && i % major === 0;
+    const len = isMajor ? Math.min(flatR - 0.5, minorLen * 1.7) : minorLen;
+    const w = isMajor ? minorW * 1.5 : minorW;
+    const angleDeg = ((start - i * step) * 180) / Math.PI;
+    const box = makeBaseBox(len, w, hz)
+      .translate([outerR - len / 2, 0, top + 0.1 - hz / 2])
+      .rotate(angleDeg, [0, 0, 0], [0, 0, 1]) as Solid;
+    cutters = cutters ? (cutters.fuse(box) as Solid) : box;
+  }
+  return cutters ? (body.cut(cutters) as Solid) : body;
+}
+
+/**
  * Carve a knurl into the side wall: vertical flutes, diagonal (helical), or a
  * diamond cross-hatch. Each groove is a round cutter cylinder; helical/diamond
  * tilt the cylinders circumferentially by the helix angle.
@@ -293,6 +336,7 @@ export function buildKnob(params: KnobParams): Solid {
   body = applyTopEdge(body, params);
   body = applyTopStyle(body, params);
   body = applyIndicator(body, params);
+  body = applyTicks(body, params);
   body = applyTexture(body, params);
   body = applySkirt(body, params);
   body = applyBottomChamfer(body, params);

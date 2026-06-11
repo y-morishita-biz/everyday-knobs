@@ -21,6 +21,7 @@ import {
   type ShaftType,
   type SkirtStyle,
   type SurfaceTexture,
+  type TickRing,
   type TopEdgeStyle,
   type TopStyle,
 } from "../cad/params";
@@ -437,6 +438,56 @@ export function Controls({
               unit="°"
               onChange={(v) => set({ indicatorAngle: v })}
             />
+          </>
+        )}
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">目盛り（ティック）</h2>
+        <div className="toggle">
+          {(["none", "ticks"] as TickRing[]).map((t) => (
+            <button
+              key={t}
+              className={`toggle__btn${params.tickRing === t ? " is-active" : ""}`}
+              onClick={() => set({ tickRing: t })}
+            >
+              {t === "none" ? "なし" : "目盛りあり"}
+            </button>
+          ))}
+        </div>
+        {params.tickRing === "ticks" && (
+          <>
+            <Slider
+              label="本数"
+              value={params.tickCount}
+              min={4}
+              max={60}
+              step={1}
+              unit="本"
+              onChange={(v) => set({ tickCount: v })}
+            />
+            <Slider
+              label="主目盛り間隔"
+              value={params.tickMajorEvery}
+              min={0}
+              max={12}
+              step={1}
+              unit={params.tickMajorEvery === 0 ? "（なし）" : "本ごと"}
+              onChange={(v) => set({ tickMajorEvery: v })}
+            />
+            <Slider
+              label="角度範囲"
+              value={params.tickSpan}
+              min={60}
+              max={360}
+              step={10}
+              unit="°"
+              onChange={(v) => set({ tickSpan: v })}
+            />
+            <p className="hint">
+              {params.tickSpan >= 360 ? "全周リング" : "上方中心の弧（下に開口）"}・
+              縁内側に0.4mm彫り。主目盛りは長く太く
+            </p>
           </>
         )}
       </section>

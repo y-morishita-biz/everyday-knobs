@@ -75,6 +75,14 @@ export interface KnobParams {
   indicatorDepth: number;
   /** Radial reach from the center: line length / dimple center distance (mm). */
   indicatorReach: number;
+  /** Scale tick ring engraved around the top rim. */
+  tickRing: TickRing;
+  /** Number of ticks around the ring (or across the arc). */
+  tickCount: number;
+  /** Every Nth tick is a long "major" tick (0 = all ticks equal). */
+  tickMajorEvery: number;
+  /** Angular span of the tick scale (degrees, 360 = full ring). */
+  tickSpan: number;
   /** Side-wall texture. */
   surfaceTexture: SurfaceTexture;
   /** Number of vertical flutes around the side. */
@@ -101,6 +109,9 @@ export type TopStyle = "flat" | "recess" | "dish";
 
 /** Day 5: top-face indicator — none, an engraved radial line, or an offset dimple. */
 export type IndicatorType = "none" | "line" | "dimple";
+
+/** Day 15: scale tick ring on the top rim — none or engraved ticks. */
+export type TickRing = "none" | "ticks";
 
 /**
  * Side-wall texture.
@@ -135,6 +146,10 @@ export const DEFAULT_PARAMS: KnobParams = {
   indicatorAngle: 90,
   indicatorDepth: 1.0,
   indicatorReach: 8.5,
+  tickRing: "none",
+  tickCount: 12,
+  tickMajorEvery: 0,
+  tickSpan: 360,
   surfaceTexture: "none",
   fluteCount: 24,
   fluteDepth: 0.6,
@@ -298,6 +313,10 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     indicatorAngle: cl(num(input.indicatorAngle, d.indicatorAngle), 0, 360),
     indicatorDepth: Math.max(0.4, num(input.indicatorDepth, d.indicatorDepth)),
     indicatorReach: Math.max(2, num(input.indicatorReach, d.indicatorReach)),
+    tickRing: pick(input.tickRing, ["none", "ticks"], d.tickRing),
+    tickCount: cl(Math.round(num(input.tickCount, d.tickCount)), 4, 60),
+    tickMajorEvery: cl(Math.round(num(input.tickMajorEvery, d.tickMajorEvery)), 0, 12),
+    tickSpan: cl(num(input.tickSpan, d.tickSpan), 60, 360),
     surfaceTexture: pick(
       input.surfaceTexture,
       ["none", "flutes", "helical", "diamond"],
