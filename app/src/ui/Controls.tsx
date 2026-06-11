@@ -6,12 +6,14 @@ import {
   maxFluteDepth,
   maxIndicatorDepth,
   maxIndicatorReach,
+  maxCornerRadius,
   maxShaftHoleDepth,
   maxSkirtHeight,
   minSkirtDiameter,
   maxTopEdgeSize,
   maxTopRecessDepth,
   maxTopRimWidth,
+  type BodyShape,
   type IndicatorType,
   type KnobParams,
   type ShaftType,
@@ -20,6 +22,11 @@ import {
   type TopEdgeStyle,
   type TopStyle,
 } from "../cad/params";
+
+const BODY_SHAPE_LABELS: Record<BodyShape, string> = {
+  round: "丸（円）",
+  polygon: "多角形",
+};
 
 const SKIRT_LABELS: Record<SkirtStyle, string> = {
   none: "なし",
@@ -122,6 +129,7 @@ export function Controls({
   const maxReach = maxIndicatorReach(params);
   const minSkirt = minSkirtDiameter(params);
   const maxSkirt = maxSkirtHeight(params);
+  const maxCorner = maxCornerRadius(params);
 
   return (
     <aside className="panel">
@@ -141,6 +149,42 @@ export function Controls({
             </button>
           ))}
         </div>
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">本体形状</h2>
+        <div className="toggle">
+          {(Object.keys(BODY_SHAPE_LABELS) as BodyShape[]).map((s) => (
+            <button
+              key={s}
+              className={`toggle__btn${params.bodyShape === s ? " is-active" : ""}`}
+              onClick={() => set({ bodyShape: s })}
+            >
+              {BODY_SHAPE_LABELS[s]}
+            </button>
+          ))}
+        </div>
+        {params.bodyShape === "polygon" && (
+          <>
+            <Slider
+              label="角数"
+              value={params.polygonSides}
+              min={3}
+              max={8}
+              step={1}
+              unit="角"
+              onChange={(v) => set({ polygonSides: v })}
+            />
+            <Slider
+              label="角の丸み"
+              value={params.cornerRadius}
+              min={0}
+              max={Math.max(0, maxCorner)}
+              step={0.1}
+              onChange={(v) => set({ cornerRadius: v })}
+            />
+          </>
+        )}
       </section>
 
       <section className="group">

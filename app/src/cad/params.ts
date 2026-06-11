@@ -37,7 +37,13 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
 
 export interface KnobParams {
   shaft: ShaftType;
-  /** Outer diameter at the base (bottom) of the body (mm). */
+  /** Cross-section of the body. */
+  bodyShape: BodyShape;
+  /** Number of sides when bodyShape is polygon (3–8). */
+  polygonSides: number;
+  /** Corner rounding radius for a polygon body (mm). */
+  cornerRadius: number;
+  /** Outer diameter at the base (bottom) of the body (mm). For polygon = circumscribed. */
   bodyDiameter: number;
   /** Outer diameter at the top of the body (mm). Equal to bodyDiameter = straight cylinder. */
   topDiameter: number;
@@ -103,8 +109,14 @@ export type SurfaceTexture = "none" | "flutes" | "helical" | "diamond";
 /** Day 9: base flange — none or a wider skirt at the bottom. */
 export type SkirtStyle = "none" | "flange";
 
+/** Day 11: body cross-section — round or a regular polygon. */
+export type BodyShape = "round" | "polygon";
+
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
+  bodyShape: "round",
+  polygonSides: 6,
+  cornerRadius: 1,
   bodyDiameter: 20,
   topDiameter: 20,
   bodyHeight: 16,
@@ -141,9 +153,32 @@ export function shaftSocketRadius(params: KnobParams): number {
   return SHAFTS[params.shaft].outerDiameter / 2 + params.shaftClearance;
 }
 
+/** Inscribed-radius factor for a polygon body (1 for round). */
+function inradiusFactor(params: KnobParams): number {
+  return params.bodyShape === "polygon" ? Math.cos(Math.PI / params.polygonSides) : 1;
+}
+
+/**
+ * Effective outer radius of a body section at the given diameter (mm).
+ * For a polygon this is the inscribed radius (face center) — the limiting
+ * radius for top features and socket clearance.
+ */
+export function bodyOuterRadius(diameter: number, params: KnobParams): number {
+  return (diameter / 2) * inradiusFactor(params);
+}
+
 /** Smallest body diameter that still leaves MIN_WALL around the socket (mm). */
 export function minBodyDiameter(params: KnobParams): number {
-  return Math.ceil((shaftSocketRadius(params) + MIN_WALL) * 2);
+  const needed = shaftSocketRadius(params) + MIN_WALL; // required inscribed radius
+  return Math.ceil((needed / inradiusFactor(params)) * 2);
+}
+
+/** Largest corner-rounding radius for the current polygon size (mm). */
+export function maxCornerRadius(params: KnobParams): number {
+  if (params.bodyShape !== "polygon") return 0;
+  const rc = Math.min(params.bodyDiameter, params.topDiameter) / 2;
+  const side = 2 * rc * Math.sin(Math.PI / params.polygonSides);
+  return Math.max(0, Math.floor(Math.min(side * 0.45, rc * 0.5) * 10) / 10);
 }
 
 /** Deepest socket that still leaves MIN_WALL of material under the top (mm). */
@@ -158,7 +193,7 @@ export function maxShaftHoleDepth(params: KnobParams): number {
  * a reasonable straight flank remains.
  */
 export function maxTopEdgeSize(params: KnobParams): number {
-  const radial = params.topDiameter / 2 - shaftSocketRadius(params) - 0.2;
+  const radial = bodyOuterRadius(params.topDiameter, params) - shaftSocketRadius(params) - 0.2;
   const vertical = params.bodyHeight * 0.45;
   return Math.max(0, Math.floor(Math.min(radial, vertical) * 10) / 10);
 }
@@ -169,7 +204,7 @@ export function flatTopRadius(params: KnobParams): number {
     params.topEdgeStyle === "none"
       ? 0
       : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
-  return params.topDiameter / 2 - edge;
+  return bodyOuterRadius(params.topDiameter, params) - edge;
 }
 
 /**
@@ -241,6 +276,9 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
 
   const p: KnobParams = {
     shaft: pick(input.shaft, ["EC11", "EC12E"], d.shaft),
+    bodyShape: pick(input.bodyShape, ["round", "polygon"], d.bodyShape),
+    polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
+    cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
     bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
     bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
     topDiameter: cl(num(input.topDiameter, d.topDiameter), 6, 60),
@@ -283,5 +321,6 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   p.fluteDepth = Math.min(p.fluteDepth, maxFluteDepth(p));
   p.skirtDiameter = Math.max(minSkirtDiameter(p), p.skirtDiameter);
   p.skirtHeight = Math.min(p.skirtHeight, maxSkirtHeight(p));
+  p.cornerRadius = Math.min(p.cornerRadius, maxCornerRadius(p));
   return p;
 }

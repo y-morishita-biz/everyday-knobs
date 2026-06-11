@@ -1,14 +1,16 @@
 import {
+  draw,
   drawCircle,
   drawRoundedRectangle,
   makeBaseBox,
   makeCylinder,
   makeSphere,
 } from "replicad";
-import type { Sketch, Solid } from "replicad";
+import type { Drawing, Sketch, Solid } from "replicad";
 import {
   SHAFTS,
   flatTopRadius,
+  maxCornerRadius,
   maxFluteDepth,
   maxIndicatorDepth,
   maxIndicatorReach,
@@ -46,15 +48,48 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
     .translate([0, 0, -0.1]) as Solid;
 }
 
-/** Solid body: a straight cylinder, or a frustum when top and base differ. */
+/** A regular polygon drawing with optional rounded corners, circumradius `rc`. */
+function polygonDrawing(rc: number, params: KnobParams): Drawing {
+  const n = params.polygonSides;
+  const pts: [number, number][] = [];
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + (i / n) * 2 * Math.PI;
+    pts.push([Math.cos(a) * rc, Math.sin(a) * rc]);
+  }
+  let pen = draw(pts[0]);
+  for (let i = 1; i < n; i++) pen = pen.lineTo(pts[i]);
+  let d = pen.close();
+  const cr = Math.min(params.cornerRadius, maxCornerRadius(params));
+  if (cr > 0.05) d = d.fillet(cr);
+  return d;
+}
+
+/** Cross-section drawing (circle or polygon) for the body at a given diameter. */
+function sectionDrawing(diameter: number, params: KnobParams): Drawing {
+  return params.bodyShape === "polygon"
+    ? polygonDrawing(diameter / 2, params)
+    : drawCircle(diameter / 2);
+}
+
+/** Solid body: round or polygon, straight or tapered (frustum / prism). */
 function buildBody(params: KnobParams): Solid {
   const baseR = params.bodyDiameter / 2;
   const topR = params.topDiameter / 2;
-  if (Math.abs(baseR - topR) < 0.01) {
+  const straight = Math.abs(baseR - topR) < 0.01;
+
+  if (params.bodyShape === "round" && straight) {
     return makeCylinder(baseR, params.bodyHeight) as Solid;
   }
-  const base = drawCircle(baseR).sketchOnPlane("XY", 0) as Sketch;
-  const top = drawCircle(topR).sketchOnPlane("XY", params.bodyHeight) as Sketch;
+  if (straight) {
+    return sectionDrawing(params.bodyDiameter, params)
+      .sketchOnPlane("XY")
+      .extrude(params.bodyHeight) as Solid;
+  }
+  const base = sectionDrawing(params.bodyDiameter, params).sketchOnPlane("XY", 0) as Sketch;
+  const top = sectionDrawing(params.topDiameter, params).sketchOnPlane(
+    "XY",
+    params.bodyHeight,
+  ) as Sketch;
   return base.loftWith(top, { ruled: true }) as Solid;
 }
 
@@ -65,6 +100,14 @@ function buildBody(params: KnobParams): Solid {
 function applyTopEdge(body: Solid, params: KnobParams): Solid {
   const size = Math.min(params.topEdgeSize, maxTopEdgeSize(params));
   if (params.topEdgeStyle === "none" || size <= 0) return body;
+  // A rounded-polygon top edge is a chain of tangent line+arc segments that
+  // OCCT cannot reliably chamfer/fillet; skip the rim treatment there.
+  if (
+    params.bodyShape === "polygon" &&
+    Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05
+  ) {
+    return body;
+  }
   const topEdge = (e: import("replicad").EdgeFinder) =>
     e.inPlane("XY", params.bodyHeight);
   return params.topEdgeStyle === "chamfer"
