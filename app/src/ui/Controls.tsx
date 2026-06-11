@@ -1,5 +1,7 @@
+import { useRef, useState } from "react";
 import {
   SHAFTS,
+  clampParams,
   minBodyDiameter,
   maxFluteDepth,
   maxIndicatorDepth,
@@ -44,7 +46,12 @@ interface ControlsProps {
   onChange: (next: KnobParams) => void;
   busy: boolean;
   onExport: (format: "stl" | "step") => void;
+  onSaveJson: () => void;
+  onLoadFile: (file: File) => void;
+  onCopyOrder: () => void;
+  onApplyText: (text: string) => void;
   error: string | null;
+  notice: string | null;
 }
 
 function Slider(props: {
@@ -77,29 +84,23 @@ function Slider(props: {
   );
 }
 
-export function Controls({ params, onChange, busy, onExport, error }: ControlsProps) {
-  const set = (patch: Partial<KnobParams>) => {
-    const next = { ...params, ...patch };
-    // Keep parameters inside the non-degenerate range after any change.
-    const minDia = minBodyDiameter(next);
-    if (next.bodyDiameter < minDia) next.bodyDiameter = minDia;
-    if (next.topDiameter < minDia) next.topDiameter = minDia;
-    const maxDepth = maxShaftHoleDepth(next);
-    if (next.shaftHoleDepth > maxDepth) next.shaftHoleDepth = maxDepth;
-    const maxEdge = maxTopEdgeSize(next);
-    if (next.topEdgeSize > maxEdge) next.topEdgeSize = maxEdge;
-    const maxRecess = maxTopRecessDepth(next);
-    if (next.topRecessDepth > maxRecess) next.topRecessDepth = maxRecess;
-    const maxFlute = maxFluteDepth(next);
-    if (next.fluteDepth > maxFlute) next.fluteDepth = maxFlute;
-    const maxRim = maxTopRimWidth(next);
-    if (next.topRimWidth > maxRim) next.topRimWidth = maxRim;
-    const maxIndDepth = maxIndicatorDepth(next);
-    if (next.indicatorDepth > maxIndDepth) next.indicatorDepth = maxIndDepth;
-    const maxReach = maxIndicatorReach(next);
-    if (next.indicatorReach > maxReach) next.indicatorReach = maxReach;
-    onChange(next);
-  };
+export function Controls({
+  params,
+  onChange,
+  busy,
+  onExport,
+  onSaveJson,
+  onLoadFile,
+  onCopyOrder,
+  onApplyText,
+  error,
+  notice,
+}: ControlsProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [codeText, setCodeText] = useState("");
+
+  // All edits funnel through clampParams so values can never go degenerate.
+  const set = (patch: Partial<KnobParams>) => onChange(clampParams({ ...params, ...patch }));
 
   const minDia = minBodyDiameter(params);
   const maxDepth = maxShaftHoleDepth(params);
@@ -339,7 +340,7 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
       </section>
 
       <section className="group">
-        <h2 className="group__title">エクスポート</h2>
+        <h2 className="group__title">3Dデータ書き出し</h2>
         <div className="export">
           <button disabled={busy} onClick={() => onExport("stl")}>
             STL
@@ -350,8 +351,55 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
         </div>
       </section>
 
+      <section className="group">
+        <h2 className="group__title">設定の保存・読込</h2>
+        <div className="export">
+          <button onClick={onSaveJson}>JSON保存</button>
+          <button onClick={() => fileInputRef.current?.click()}>JSON読込</button>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json,.json,.txt"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onLoadFile(f);
+            e.target.value = "";
+          }}
+        />
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">カスタムオーダー</h2>
+        <p className="hint">
+          このノブをメーカーに作ってもらう注文コード。コピーして送ると同じ設定で再現・プリントできます。
+        </p>
+        <button className="order-btn" onClick={onCopyOrder}>
+          注文コードをコピー
+        </button>
+        <div className="code-apply">
+          <input
+            type="text"
+            className="code-input"
+            placeholder="注文コード / JSON を貼り付け"
+            value={codeText}
+            onChange={(e) => setCodeText(e.target.value)}
+          />
+          <button
+            disabled={!codeText.trim()}
+            onClick={() => {
+              onApplyText(codeText);
+              setCodeText("");
+            }}
+          >
+            読込
+          </button>
+        </div>
+      </section>
+
       <div className={`status${busy ? " is-busy" : ""}`}>
-        {error ? `⚠ ${error}` : busy ? "計算中…" : "プレビュー更新済み"}
+        {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? "計算中…" : "プレビュー更新済み"}
       </div>
     </aside>
   );

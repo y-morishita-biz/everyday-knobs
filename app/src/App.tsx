@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { cad } from "./cad/cadClient";
 import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
+import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
 import type { ExportFormat, MeshPayload } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
 import { Viewer } from "./viewer/Viewer";
@@ -10,9 +11,17 @@ export default function App() {
   const [mesh, setMesh] = useState<MeshPayload | null>(null);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Monotonic id so out-of-order worker responses are ignored.
   const requestId = useRef(0);
+
+  // Show a transient success message, clearing any standing error.
+  const flash = (msg: string) => {
+    setError(null);
+    setNotice(msg);
+    window.setTimeout(() => setNotice((n) => (n === msg ? null : n)), 2500);
+  };
 
   // Rebuild the preview whenever parameters change (debounced for slider drags).
   useEffect(() => {
@@ -40,16 +49,45 @@ export default function App() {
     try {
       setBusy(true);
       const blob = await cad.exportModel(params, format);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `knob-${params.shaft}.${format}`;
-      a.click();
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, `knob-${params.shaft}.${format}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "エクスポートに失敗しました");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleSaveJson = () => {
+    const blob = new Blob([serializeConfig(params)], { type: "application/json" });
+    downloadBlob(blob, `knob-${params.shaft}-config.json`);
+    flash("設定を保存しました");
+  };
+
+  const applyText = (text: string) => {
+    try {
+      setParams(parseConfig(text));
+      flash("設定を読み込みました");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "読み込みに失敗しました");
+    }
+  };
+
+  const handleLoadFile = async (file: File) => {
+    try {
+      applyText(await file.text());
+    } catch {
+      setError("ファイルを読めませんでした");
+    }
+  };
+
+  const handleCopyOrder = async () => {
+    const code = encodeOrderCode(params);
+    try {
+      await navigator.clipboard.writeText(code);
+      flash("注文コードをコピーしました");
+    } catch {
+      // Clipboard blocked (e.g. insecure context): fall back to a prompt.
+      window.prompt("注文コードをコピーしてください", code);
     }
   };
 
@@ -60,9 +98,23 @@ export default function App() {
         onChange={setParams}
         busy={busy}
         onExport={handleExport}
+        onSaveJson={handleSaveJson}
+        onLoadFile={handleLoadFile}
+        onCopyOrder={handleCopyOrder}
+        onApplyText={applyText}
         error={error}
+        notice={notice}
       />
       <Viewer mesh={mesh} />
     </div>
   );
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
