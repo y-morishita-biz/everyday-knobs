@@ -125,26 +125,29 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
   return body.cut(dimple) as Solid;
 }
 
-/** Carve vertical flutes (straight knurl) into the side wall. */
-function applyFlutes(body: Solid, params: KnobParams): Solid {
-  if (params.surfaceTexture !== "flutes") return body;
+/**
+ * Carve a knurl into the side wall: vertical flutes, diagonal (helical), or a
+ * diamond cross-hatch. Each groove is a round cutter cylinder; helical/diamond
+ * tilt the cylinders circumferentially by the helix angle.
+ */
+function applyTexture(body: Solid, params: KnobParams): Solid {
+  if (params.surfaceTexture === "none") return body;
   const depth = Math.min(params.fluteDepth, maxFluteDepth(params));
   if (depth <= 0) return body;
   const n = Math.round(params.fluteCount);
 
-  // Leave smooth rings: above the base and below the top edge treatment.
+  // Leave smooth rings: above the skirt and below the top edge treatment.
   const edge =
     params.topEdgeStyle === "none"
       ? 0
       : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
-  // Start the flute band above the skirt so hidden flutes aren't wasted.
   const skirtTop =
     params.skirt === "flange" ? Math.min(params.skirtHeight, maxSkirtHeight(params)) : 0;
   const zStart = Math.max(0.8, skirtTop + 0.4);
   const bandHeight = params.bodyHeight - (edge + 0.8) - zStart;
   if (bandHeight <= 1) return body;
 
-  // Reference radius at the band's mid-height keeps the flute root wall constant.
+  // Reference radius at the band's mid-height keeps the groove root wall constant.
   const baseR = params.bodyDiameter / 2;
   const topR = params.topDiameter / 2;
   const midZ = zStart + bandHeight / 2;
@@ -153,17 +156,40 @@ function applyFlutes(body: Solid, params: KnobParams): Solid {
   const cutR = Math.max(0.3, ((Math.PI * refR) / n) * widthRatio);
   const dist = refR - depth + cutR;
 
-  let cutters: Solid | null = null;
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * 2 * Math.PI;
-    const c = makeCylinder(cutR, bandHeight + 0.2, [
-      Math.cos(a) * dist,
-      Math.sin(a) * dist,
-      zStart - 0.1,
-    ]) as Solid;
-    cutters = cutters ? (cutters.fuse(c) as Solid) : c;
+  // One set of grooves tilted by `sign * angle` from vertical.
+  const theta = params.surfaceTexture === "flutes" ? 0 : (params.knurlAngle * Math.PI) / 180;
+  const len = bandHeight / Math.cos(theta) + 0.4;
+  const buildSet = (sign: number): Solid => {
+    let set: Solid | null = null;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 2 * Math.PI;
+      const cx = Math.cos(a) * dist;
+      const cy = Math.sin(a) * dist;
+      // Axis tilts circumferentially (tangent dir) so cut depth stays constant.
+      const dir: [number, number, number] = [
+        sign * Math.sin(theta) * -Math.sin(a),
+        sign * Math.sin(theta) * Math.cos(a),
+        Math.cos(theta),
+      ];
+      const baseP: [number, number, number] = [
+        cx - (dir[0] * len) / 2,
+        cy - (dir[1] * len) / 2,
+        midZ - (dir[2] * len) / 2,
+      ];
+      const c = makeCylinder(cutR, len, baseP, dir) as Solid;
+      set = set ? (set.fuse(c) as Solid) : c;
+    }
+    return set as Solid;
+  };
+
+  // Cut each groove family separately. For diamond this avoids fusing the two
+  // crossing families together (a much more expensive boolean).
+  const signs = params.surfaceTexture === "diamond" ? [1, -1] : [1];
+  let result = body;
+  for (const s of signs) {
+    result = result.cut(buildSet(s)) as Solid;
   }
-  return cutters ? (body.cut(cutters) as Solid) : body;
+  return result;
 }
 
 /** Fuse a wider flange ring at the base. Done after flutes so the skirt face is smooth. */
@@ -182,7 +208,7 @@ export function buildKnob(params: KnobParams): Solid {
   body = applyTopEdge(body, params);
   body = applyTopStyle(body, params);
   body = applyIndicator(body, params);
-  body = applyFlutes(body, params);
+  body = applyTexture(body, params);
   body = applySkirt(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);

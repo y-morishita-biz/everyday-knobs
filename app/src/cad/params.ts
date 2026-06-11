@@ -75,6 +75,8 @@ export interface KnobParams {
   fluteDepth: number;
   /** Flute cutter size as a percentage of the angular pitch (40–120). */
   fluteWidthPercent: number;
+  /** Helix angle for helical / diamond knurl (degrees from vertical). */
+  knurlAngle: number;
   /** Base flange / skirt. */
   skirt: SkirtStyle;
   /** Outer diameter of the base skirt (mm). */
@@ -92,8 +94,11 @@ export type TopStyle = "flat" | "recess" | "dish";
 /** Day 5: top-face indicator — none, an engraved radial line, or an offset dimple. */
 export type IndicatorType = "none" | "line" | "dimple";
 
-/** Day 6: side-wall texture — smooth or vertical flutes (straight knurl). */
-export type SurfaceTexture = "none" | "flutes";
+/**
+ * Side-wall texture.
+ * Day 6: none / flutes (vertical). Day 10: helical (diagonal) / diamond (cross-hatch).
+ */
+export type SurfaceTexture = "none" | "flutes" | "helical" | "diamond";
 
 /** Day 9: base flange — none or a wider skirt at the bottom. */
 export type SkirtStyle = "none" | "flange";
@@ -119,6 +124,7 @@ export const DEFAULT_PARAMS: KnobParams = {
   fluteCount: 24,
   fluteDepth: 0.6,
   fluteWidthPercent: 85,
+  knurlAngle: 30,
   skirt: "none",
   skirtDiameter: 26,
   skirtHeight: 3,
@@ -250,10 +256,15 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     indicatorAngle: cl(num(input.indicatorAngle, d.indicatorAngle), 0, 360),
     indicatorDepth: Math.max(0.4, num(input.indicatorDepth, d.indicatorDepth)),
     indicatorReach: Math.max(2, num(input.indicatorReach, d.indicatorReach)),
-    surfaceTexture: pick(input.surfaceTexture, ["none", "flutes"], d.surfaceTexture),
+    surfaceTexture: pick(
+      input.surfaceTexture,
+      ["none", "flutes", "helical", "diamond"],
+      d.surfaceTexture,
+    ),
     fluteCount: cl(Math.round(num(input.fluteCount, d.fluteCount)), 8, 48),
     fluteDepth: Math.max(0.2, num(input.fluteDepth, d.fluteDepth)),
     fluteWidthPercent: cl(num(input.fluteWidthPercent, d.fluteWidthPercent), 40, 120),
+    knurlAngle: cl(num(input.knurlAngle, d.knurlAngle), 10, 30),
     skirt: pick(input.skirt, ["none", "flange"], d.skirt),
     skirtDiameter: cl(num(input.skirtDiameter, d.skirtDiameter), 6, 70),
     skirtHeight: cl(num(input.skirtHeight, d.skirtHeight), 1, 40),
