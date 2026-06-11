@@ -55,6 +55,12 @@ export interface KnobParams {
   topStyle: TopStyle;
   /** Depth of the recess / dish carved into the top face (mm). */
   topRecessDepth: number;
+  /** Pointer / position indicator on the top face. */
+  indicator: IndicatorType;
+  /** Line width (line) or dimple diameter (dimple), in mm. */
+  indicatorSize: number;
+  /** Angular position of the indicator (degrees, 0 = +X / "3 o'clock"). */
+  indicatorAngle: number;
 }
 
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
@@ -62,6 +68,9 @@ export type TopEdgeStyle = "none" | "chamfer" | "fillet";
 
 /** Day 4: top face treatment — flat, cylindrical recess, or spherical dish. */
 export type TopStyle = "flat" | "recess" | "dish";
+
+/** Day 5: top-face indicator — none, an engraved radial line, or an offset dimple. */
+export type IndicatorType = "none" | "line" | "dimple";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -74,7 +83,13 @@ export const DEFAULT_PARAMS: KnobParams = {
   topEdgeSize: 1.5,
   topStyle: "flat",
   topRecessDepth: 2,
+  indicator: "line",
+  indicatorSize: 1.2,
+  indicatorAngle: 90,
 };
+
+/** Engraving depth of the top-face indicator (mm). */
+export const INDICATOR_DEPTH = 1.0;
 
 /** Minimum wall thickness we keep around the shaft socket and above it (mm). */
 export const MIN_WALL = 1.5;

@@ -1,6 +1,13 @@
-import { drawCircle, drawRoundedRectangle, makeCylinder, makeSphere } from "replicad";
+import {
+  drawCircle,
+  drawRoundedRectangle,
+  makeBaseBox,
+  makeCylinder,
+  makeSphere,
+} from "replicad";
 import type { Sketch, Solid } from "replicad";
 import {
+  INDICATOR_DEPTH,
   SHAFTS,
   flatTopRadius,
   maxShaftHoleDepth,
@@ -82,11 +89,43 @@ function applyTopStyle(body: Solid, params: KnobParams): Solid {
   return body.cut(sphere) as Solid;
 }
 
+/** Engrave a radial pointer line or an offset dimple into the top face. */
+function applyIndicator(body: Solid, params: KnobParams): Solid {
+  if (params.indicator === "none") return body;
+  const flatR = flatTopRadius(params);
+  const top = params.bodyHeight;
+  // Keep the engraving shallower than the wall above the socket.
+  const wall = top - Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
+  const depth = Math.min(INDICATOR_DEPTH, wall - 0.4);
+  if (depth <= 0) return body;
+
+  if (params.indicator === "line") {
+    const len = flatR + 1; // overshoot the rim for a clean cut
+    const hz = depth + 0.2;
+    const cutter = makeBaseBox(len, params.indicatorSize, hz)
+      .translate([len / 2, 0, top + 0.1 - hz / 2])
+      .rotate(params.indicatorAngle, [0, 0, 0], [0, 0, 1]);
+    return body.cut(cutter) as Solid;
+  }
+
+  // dimple: an offset cylindrical pocket near the rim.
+  const r = params.indicatorSize / 2;
+  const offset = Math.max(0, flatR - r - 1.2);
+  const a = (params.indicatorAngle * Math.PI) / 180;
+  const dimple = makeCylinder(r, depth + 0.1, [
+    Math.cos(a) * offset,
+    Math.sin(a) * offset,
+    top - depth,
+  ]);
+  return body.cut(dimple) as Solid;
+}
+
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
   let body = buildBody(params);
   body = applyTopEdge(body, params);
   body = applyTopStyle(body, params);
+  body = applyIndicator(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   return body.cut(socket);
