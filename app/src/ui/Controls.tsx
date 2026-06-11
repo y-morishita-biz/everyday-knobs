@@ -1,15 +1,22 @@
 import {
   SHAFTS,
   minBodyDiameter,
+  maxFluteDepth,
   maxShaftHoleDepth,
   maxTopEdgeSize,
   maxTopRecessDepth,
   type IndicatorType,
   type KnobParams,
   type ShaftType,
+  type SurfaceTexture,
   type TopEdgeStyle,
   type TopStyle,
 } from "../cad/params";
+
+const TEXTURE_LABELS: Record<SurfaceTexture, string> = {
+  none: "なし（つるつる）",
+  flutes: "縦溝（ローレット）",
+};
 
 const INDICATOR_LABELS: Record<IndicatorType, string> = {
   none: "なし",
@@ -80,6 +87,8 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
     if (next.topEdgeSize > maxEdge) next.topEdgeSize = maxEdge;
     const maxRecess = maxTopRecessDepth(next);
     if (next.topRecessDepth > maxRecess) next.topRecessDepth = maxRecess;
+    const maxFlute = maxFluteDepth(next);
+    if (next.fluteDepth > maxFlute) next.fluteDepth = maxFlute;
     onChange(next);
   };
 
@@ -87,6 +96,7 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
   const maxDepth = maxShaftHoleDepth(params);
   const maxEdge = maxTopEdgeSize(params);
   const maxRecess = maxTopRecessDepth(params);
+  const maxFlute = maxFluteDepth(params);
 
   return (
     <aside className="panel">
@@ -186,6 +196,42 @@ export function Controls({ params, onChange, busy, onExport, error }: ControlsPr
         )}
         {maxRecess < 0.4 && params.topStyle !== "flat" && (
           <p className="hint">軸穴を浅くすると凹みを深くできます</p>
+        )}
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">側面テクスチャ</h2>
+        <div className="toggle">
+          {(Object.keys(TEXTURE_LABELS) as SurfaceTexture[]).map((tex) => (
+            <button
+              key={tex}
+              className={`toggle__btn${params.surfaceTexture === tex ? " is-active" : ""}`}
+              onClick={() => set({ surfaceTexture: tex })}
+            >
+              {TEXTURE_LABELS[tex]}
+            </button>
+          ))}
+        </div>
+        {params.surfaceTexture === "flutes" && (
+          <>
+            <Slider
+              label="本数"
+              value={params.fluteCount}
+              min={8}
+              max={48}
+              step={1}
+              unit="本"
+              onChange={(v) => set({ fluteCount: v })}
+            />
+            <Slider
+              label="溝の深さ"
+              value={params.fluteDepth}
+              min={0.2}
+              max={Math.max(0.2, maxFlute)}
+              step={0.1}
+              onChange={(v) => set({ fluteDepth: v })}
+            />
+          </>
         )}
       </section>
 

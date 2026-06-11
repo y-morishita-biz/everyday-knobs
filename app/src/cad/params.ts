@@ -61,6 +61,12 @@ export interface KnobParams {
   indicatorSize: number;
   /** Angular position of the indicator (degrees, 0 = +X / "3 o'clock"). */
   indicatorAngle: number;
+  /** Side-wall texture. */
+  surfaceTexture: SurfaceTexture;
+  /** Number of vertical flutes around the side. */
+  fluteCount: number;
+  /** Radial depth each flute bites into the side (mm). */
+  fluteDepth: number;
 }
 
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
@@ -71,6 +77,9 @@ export type TopStyle = "flat" | "recess" | "dish";
 
 /** Day 5: top-face indicator — none, an engraved radial line, or an offset dimple. */
 export type IndicatorType = "none" | "line" | "dimple";
+
+/** Day 6: side-wall texture — smooth or vertical flutes (straight knurl). */
+export type SurfaceTexture = "none" | "flutes";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -86,6 +95,9 @@ export const DEFAULT_PARAMS: KnobParams = {
   indicator: "line",
   indicatorSize: 1.2,
   indicatorAngle: 90,
+  surfaceTexture: "none",
+  fluteCount: 24,
+  fluteDepth: 0.6,
 };
 
 /** Engraving depth of the top-face indicator (mm). */
@@ -140,4 +152,18 @@ export function flatTopRadius(params: KnobParams): number {
 export function maxTopRecessDepth(params: KnobParams): number {
   const room = params.bodyHeight - params.shaftHoleDepth - MIN_WALL;
   return Math.max(0, Math.floor(room * 10) / 10);
+}
+
+/** Mid-height body radius — the reference radius for vertical flutes (mm). */
+export function midBodyRadius(params: KnobParams): number {
+  return (params.bodyDiameter + params.topDiameter) / 4;
+}
+
+/**
+ * Deepest a flute can bite while keeping a wall of at least 1.0mm between the
+ * flute root and the shaft socket (mm), capped for sane proportions.
+ */
+export function maxFluteDepth(params: KnobParams): number {
+  const room = midBodyRadius(params) - shaftSocketRadius(params) - 1.0;
+  return Math.max(0, Math.min(1.5, Math.floor(room * 10) / 10));
 }
