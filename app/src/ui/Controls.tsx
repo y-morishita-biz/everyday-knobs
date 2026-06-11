@@ -66,6 +66,7 @@ interface ControlsProps {
   busy: boolean;
   busyLabel: string;
   onExport: (format: "stl" | "step") => void;
+  onExportFitTest: () => void;
   onSaveJson: () => void;
   onLoadFile: (file: File) => void;
   onCopyOrder: () => void;
@@ -112,6 +113,7 @@ export function Controls({
   busy,
   busyLabel,
   onExport,
+  onExportFitTest,
   onSaveJson,
   onLoadFile,
   onCopyOrder,
@@ -452,11 +454,43 @@ export function Controls({
         <Slider
           label="嵌合クリアランス"
           value={params.shaftClearance}
-          min={0}
+          min={-0.1}
           max={0.6}
           step={0.05}
           onChange={(v) => set({ shaftClearance: v })}
         />
+        <p className="hint">
+          軸穴 実寸 φ{(SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance).toFixed(2)}
+          {SHAFTS[params.shaft].flatDistance !== undefined &&
+            ` ／ Dカット面 ${(SHAFTS[params.shaft].flatDistance! + params.shaftClearance).toFixed(2)}mm`}
+          （マイナス=きつめ圧入）。入口には0.5mmの挿入面取りが自動で付きます
+        </p>
+      </section>
+
+      <section className="group">
+        <h2 className="group__title">印刷サポート</h2>
+        <Slider
+          label="底面の面取り"
+          value={params.bottomChamfer}
+          min={0}
+          max={0.6}
+          step={0.1}
+          onChange={(v) => set({ bottomChamfer: v })}
+        />
+        <p className="hint">
+          1層目の太り（エレファントフット）対策。0 = なし
+          {params.bodyShape === "polygon" &&
+            params.cornerRadius > 0.05 &&
+            params.skirt !== "flange" &&
+            "（角丸多角形の底面には適用されません）"}
+        </p>
+        <button className="order-btn" disabled={busy} onClick={onExportFitTest}>
+          公差テストピースをSTL書き出し
+        </button>
+        <p className="hint">
+          現在の公差を中心に 0.05mm 刻みで5段（−0.05〜+0.15）のソケットを並べた試し刷り用。
+          天面の刻み目 1〜5 が順番（2 = 現在値）。一度のプリントでベストフィットを特定できます
+        </p>
       </section>
 
       <section className="group">

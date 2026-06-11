@@ -52,6 +52,19 @@ export default function App() {
   const activePresetId =
     PRESETS.find((p) => JSON.stringify(p.params) === paramsKey)?.id ?? null;
 
+  const handleExportFitTest = async () => {
+    try {
+      setExporting(true);
+      const blob = await cad.exportFitTest(params);
+      downloadBlob(blob, `fit-test-${params.shaft}.stl`);
+      flash("テストピースを書き出しました");
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "書き出しに失敗しました");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const handleSaveJson = () => {
     const blob = new Blob([serializeConfig(params)], { type: "application/json" });
     downloadBlob(blob, `knob-${params.shaft}-config.json`);
@@ -94,6 +107,7 @@ export default function App() {
         busy={busy || exporting}
         busyLabel={busyLabel}
         onExport={handleExport}
+        onExportFitTest={handleExportFitTest}
         onSaveJson={handleSaveJson}
         onLoadFile={handleLoadFile}
         onCopyOrder={handleCopyOrder}

@@ -48,6 +48,24 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
     .translate([0, 0, -0.1]) as Solid;
 }
 
+/**
+ * Truncated cone cut at a socket opening: a 0.5mm lead-in chamfer that makes
+ * the shaft easy to start and shrugs off first-layer squish around the hole.
+ * `faceUp` selects which way the wide end points (true = opening faces +Z).
+ */
+function socketLeadIn(params: KnobParams, cx: number, zBase: number, faceUp: boolean): Solid {
+  const r = SHAFTS[params.shaft].outerDiameter / 2 + params.shaftClearance;
+  const flare = 0.45;
+  const h = 0.5;
+  const wide = drawCircle(r + flare)
+    .translate(cx, 0)
+    .sketchOnPlane("XY", faceUp ? zBase + 0.05 : zBase - 0.05) as Sketch;
+  const narrow = drawCircle(r)
+    .translate(cx, 0)
+    .sketchOnPlane("XY", faceUp ? zBase - h : zBase + h) as Sketch;
+  return wide.loftWith(narrow, { ruled: true }) as Solid;
+}
+
 /** A regular polygon drawing with optional rounded corners, circumradius `rc`. */
 function polygonDrawing(rc: number, params: KnobParams): Drawing {
   const n = params.polygonSides;
@@ -245,6 +263,30 @@ function applySkirt(body: Solid, params: KnobParams): Solid {
   return body.fuse(ring) as Solid;
 }
 
+/**
+ * Chamfer the bottom outer edge to compensate for first-layer squish
+ * (elephant foot). Applied before the socket cut so only the outer rim is
+ * touched. Only attempted when the bottom edge is a clean, chamferable loop:
+ * a flange skirt always gives a plain circle; otherwise the body must be
+ * straight (not lofted) and not a rounded polygon (tangent line+arc chains and
+ * lofted edges abort the chamfer in OCCT).
+ */
+function applyBottomChamfer(body: Solid, params: KnobParams): Solid {
+  const size = Math.min(params.bottomChamfer, 0.6);
+  if (size <= 0.05) return body;
+  const straight = Math.abs(params.bodyDiameter - params.topDiameter) < 0.02;
+  const roundedPolygon =
+    params.bodyShape === "polygon" &&
+    Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05;
+  const cleanBottom = params.skirt === "flange" || (straight && !roundedPolygon);
+  if (!cleanBottom) return body;
+  try {
+    return body.chamfer(size, (e) => e.inPlane("XY", 0)) as Solid;
+  } catch {
+    return body;
+  }
+}
+
 /** Build the full knob solid for the given parameters. */
 export function buildKnob(params: KnobParams): Solid {
   let body = buildBody(params);
@@ -253,7 +295,61 @@ export function buildKnob(params: KnobParams): Solid {
   body = applyIndicator(body, params);
   body = applyTexture(body, params);
   body = applySkirt(body, params);
+  body = applyBottomChamfer(body, params);
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
-  return body.cut(socket);
+  let result = body.cut(socket) as Solid;
+  // Insertion lead-in at the socket opening (bottom face).
+  result = result.cut(socketLeadIn(params, 0, 0, false)) as Solid;
+  return result;
+}
+
+/**
+ * Fit-test coupon: five short pucks on a connecting bar, each with the shaft
+ * socket cut at a different clearance — the current value −0.05 to +0.15 in
+ * 0.05mm steps. Tick marks on top (1–5) identify the steps; print once, try
+ * the shaft in each, dial in the clearance that fits best.
+ */
+export const FIT_TEST_OFFSETS = [-0.05, 0, 0.05, 0.1, 0.15];
+
+export function buildFitTestPiece(params: KnobParams): Solid {
+  const clearances = FIT_TEST_OFFSETS.map((o) =>
+    Math.max(-0.1, Math.round((params.shaftClearance + o) * 100) / 100),
+  );
+  const maxR = SHAFTS[params.shaft].outerDiameter / 2 + Math.max(...clearances);
+  const puckR = maxR + 2.5;
+  const H = 8;
+  const pitch = puckR * 2 + 2;
+
+  // Pucks + connecting bars first, then all the cuts.
+  let piece: Solid | null = null;
+  for (let i = 0; i < clearances.length; i++) {
+    const cx = i * pitch;
+    const puck = makeCylinder(puckR, H, [cx, 0, 0]) as Solid;
+    piece = piece ? (piece.fuse(puck) as Solid) : puck;
+    if (i > 0) {
+      const bar = makeBaseBox(pitch - 2 * puckR + 2, 6, 2).translate([cx - pitch / 2, 0, 0]);
+      piece = piece.fuse(bar) as Solid;
+    }
+  }
+
+  for (let i = 0; i < clearances.length; i++) {
+    const cx = i * pitch;
+    const p = { ...params, shaftClearance: clearances[i] };
+    // Through-socket so the fit can be tested from either side and pushed out.
+    const socket = buildShaftSocket(p, H).translate([cx, 0, 0]) as Solid;
+    piece = (piece as Solid).cut(socket) as Solid;
+    piece = piece.cut(socketLeadIn(p, cx, H, true)) as Solid;
+    piece = piece.cut(socketLeadIn(p, cx, 0, false)) as Solid;
+    // i+1 tick marks along the front of the top face.
+    for (let j = 0; j <= i; j++) {
+      const tick = makeBaseBox(0.8, 2.5, 0.7).translate([
+        cx + (j - i / 2) * 1.8,
+        puckR - 2.2,
+        H - 0.5,
+      ]);
+      piece = piece.cut(tick) as Solid;
+    }
+  }
+  return piece as Solid;
 }

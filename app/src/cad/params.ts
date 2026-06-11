@@ -49,10 +49,12 @@ export interface KnobParams {
   topDiameter: number;
   /** Total height of the body (mm). */
   bodyHeight: number;
-  /** Radial clearance added to the shaft socket for fit (mm). */
+  /** Radial clearance added to the shaft socket for fit (mm). Negative = press fit. */
   shaftClearance: number;
   /** Depth of the shaft socket measured from the bottom face (mm). */
   shaftHoleDepth: number;
+  /** Chamfer on the bottom outer edge — elephant-foot compensation (mm, 0 = off). */
+  bottomChamfer: number;
   /** Treatment applied to the top rim edge. */
   topEdgeStyle: TopEdgeStyle;
   /** Chamfer width / fillet radius for the top rim (mm). */
@@ -122,6 +124,7 @@ export const DEFAULT_PARAMS: KnobParams = {
   bodyHeight: 16,
   shaftClearance: 0.15,
   shaftHoleDepth: 12,
+  bottomChamfer: 0,
   topEdgeStyle: "chamfer",
   topEdgeSize: 1.5,
   topStyle: "flat",
@@ -282,7 +285,8 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
     bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
     topDiameter: cl(num(input.topDiameter, d.topDiameter), 6, 60),
-    shaftClearance: cl(num(input.shaftClearance, d.shaftClearance), 0, 0.6),
+    shaftClearance: cl(num(input.shaftClearance, d.shaftClearance), -0.1, 0.6),
+    bottomChamfer: cl(num(input.bottomChamfer, d.bottomChamfer), 0, 0.6),
     shaftHoleDepth: cl(num(input.shaftHoleDepth, d.shaftHoleDepth), 2, 40),
     topEdgeStyle: pick(input.topEdgeStyle, ["none", "chamfer", "fillet"], d.topEdgeStyle),
     topEdgeSize: Math.max(0.2, num(input.topEdgeSize, d.topEdgeSize)),
