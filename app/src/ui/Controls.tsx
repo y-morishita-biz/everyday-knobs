@@ -29,6 +29,8 @@ const SKIRT_LABELS: Record<SkirtStyle, string> = {
 const TEXTURE_LABELS: Record<SurfaceTexture, string> = {
   none: "なし（つるつる）",
   flutes: "縦溝（ローレット）",
+  helical: "斜め（ヘリカル）",
+  diamond: "綾目（ダイヤ）",
 };
 
 const INDICATOR_LABELS: Record<IndicatorType, string> = {
@@ -245,10 +247,10 @@ export function Controls({
             </button>
           ))}
         </div>
-        {params.surfaceTexture === "flutes" && (
+        {params.surfaceTexture !== "none" && (
           <>
             <Slider
-              label="本数"
+              label={params.surfaceTexture === "diamond" ? "本数（各方向）" : "本数"}
               value={params.fluteCount}
               min={8}
               max={48}
@@ -273,7 +275,21 @@ export function Controls({
               unit="%"
               onChange={(v) => set({ fluteWidthPercent: v })}
             />
+            {params.surfaceTexture !== "flutes" && (
+              <Slider
+                label="ねじれ角"
+                value={params.knurlAngle}
+                min={10}
+                max={30}
+                step={1}
+                unit="°"
+                onChange={(v) => set({ knurlAngle: v })}
+              />
+            )}
           </>
+        )}
+        {(params.surfaceTexture === "helical" || params.surfaceTexture === "diamond") && (
+          <p className="hint">※ ヘリカル / ダイヤは計算に数秒かかります</p>
         )}
       </section>
 
