@@ -75,6 +75,12 @@ export interface KnobParams {
   fluteDepth: number;
   /** Flute cutter size as a percentage of the angular pitch (40–120). */
   fluteWidthPercent: number;
+  /** Base flange / skirt. */
+  skirt: SkirtStyle;
+  /** Outer diameter of the base skirt (mm). */
+  skirtDiameter: number;
+  /** Height of the base skirt (mm). */
+  skirtHeight: number;
 }
 
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
@@ -88,6 +94,9 @@ export type IndicatorType = "none" | "line" | "dimple";
 
 /** Day 6: side-wall texture — smooth or vertical flutes (straight knurl). */
 export type SurfaceTexture = "none" | "flutes";
+
+/** Day 9: base flange — none or a wider skirt at the bottom. */
+export type SkirtStyle = "none" | "flange";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -110,6 +119,9 @@ export const DEFAULT_PARAMS: KnobParams = {
   fluteCount: 24,
   fluteDepth: 0.6,
   fluteWidthPercent: 85,
+  skirt: "none",
+  skirtDiameter: 26,
+  skirtHeight: 3,
 };
 
 /** Minimum wall thickness we keep around the shaft socket and above it (mm). */
@@ -196,6 +208,16 @@ export function maxFluteDepth(params: KnobParams): number {
   return Math.max(0, Math.min(1.5, Math.floor(room * 10) / 10));
 }
 
+/** Smallest skirt diameter that is still a flange (≥ the body base) (mm). */
+export function minSkirtDiameter(params: KnobParams): number {
+  return Math.ceil(params.bodyDiameter);
+}
+
+/** Tallest skirt that still leaves body above it (mm). */
+export function maxSkirtHeight(params: KnobParams): number {
+  return Math.max(1, Math.floor((params.bodyHeight - 2) * 10) / 10);
+}
+
 /**
  * Sanitize an arbitrary (possibly imported / untrusted) parameter object into a
  * valid KnobParams: fill missing fields from defaults, coerce types, validate
@@ -232,6 +254,9 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     fluteCount: cl(Math.round(num(input.fluteCount, d.fluteCount)), 8, 48),
     fluteDepth: Math.max(0.2, num(input.fluteDepth, d.fluteDepth)),
     fluteWidthPercent: cl(num(input.fluteWidthPercent, d.fluteWidthPercent), 40, 120),
+    skirt: pick(input.skirt, ["none", "flange"], d.skirt),
+    skirtDiameter: cl(num(input.skirtDiameter, d.skirtDiameter), 6, 70),
+    skirtHeight: cl(num(input.skirtHeight, d.skirtHeight), 1, 40),
   };
 
   // Apply the interdependent dynamic limits in dependency order.
@@ -245,5 +270,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   p.indicatorDepth = Math.min(p.indicatorDepth, maxIndicatorDepth(p));
   p.indicatorReach = Math.min(p.indicatorReach, maxIndicatorReach(p));
   p.fluteDepth = Math.min(p.fluteDepth, maxFluteDepth(p));
+  p.skirtDiameter = Math.max(minSkirtDiameter(p), p.skirtDiameter);
+  p.skirtHeight = Math.min(p.skirtHeight, maxSkirtHeight(p));
   return p;
 }
