@@ -22,6 +22,17 @@ function PresetGlyph({ p }: { p: KnobParams }) {
       pts.push(`${x},${y}`);
     }
     outline = <polygon points={pts.join(" ")} className="glyph__body" />;
+  } else if (p.bodyShape === "lobed") {
+    const steps = Math.max(72, p.lobeCount * 12);
+    const meanR = R - 2;
+    const amp = Math.min(2.5, (p.lobeDepth / (p.bodyDiameter / 2)) * meanR);
+    const pts: string[] = [];
+    for (let i = 0; i < steps; i++) {
+      const a = -Math.PI / 2 + (i / steps) * 2 * Math.PI;
+      const [x, y] = at(a, meanR + amp * Math.cos(p.lobeCount * a));
+      pts.push(`${x},${y}`);
+    }
+    outline = <polygon points={pts.join(" ")} className="glyph__body" />;
   } else {
     outline = <circle cx={C} cy={C} r={R} className="glyph__body" />;
   }

@@ -10,6 +10,7 @@ import {
   maxIndicatorDepth,
   maxIndicatorReach,
   maxCornerRadius,
+  maxLobeDepth,
   maxShaftHoleDepth,
   maxSkirtHeight,
   minSkirtDiameter,
@@ -30,6 +31,7 @@ import {
 const BODY_SHAPE_LABELS: Record<BodyShape, string> = {
   round: "丸（円）",
   polygon: "多角形",
+  lobed: "波型（ロブ）",
 };
 
 const SKIRT_LABELS: Record<SkirtStyle, string> = {
@@ -142,6 +144,7 @@ export function Controls({
   const minSkirt = minSkirtDiameter(params);
   const maxSkirt = maxSkirtHeight(params);
   const maxCorner = maxCornerRadius(params);
+  const maxLobe = maxLobeDepth(params);
 
   return (
     <aside className="panel">
@@ -200,6 +203,28 @@ export function Controls({
               step={0.1}
               onChange={(v) => set({ cornerRadius: v })}
             />
+          </>
+        )}
+        {params.bodyShape === "lobed" && (
+          <>
+            <Slider
+              label="ロブ数（山）"
+              value={params.lobeCount}
+              min={3}
+              max={12}
+              step={1}
+              unit="山"
+              onChange={(v) => set({ lobeCount: v })}
+            />
+            <Slider
+              label="ロブの深さ"
+              value={params.lobeDepth}
+              min={0.3}
+              max={Math.max(0.3, maxLobe)}
+              step={0.1}
+              onChange={(v) => set({ lobeDepth: v })}
+            />
+            <p className="hint">断面を波打たせた花びら/歯車風。径=山の平均</p>
           </>
         )}
       </section>

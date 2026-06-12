@@ -43,6 +43,10 @@ export interface KnobParams {
   polygonSides: number;
   /** Corner rounding radius for a polygon body (mm). */
   cornerRadius: number;
+  /** Number of lobes when bodyShape is lobed (3–12). */
+  lobeCount: number;
+  /** Lobe amplitude — how far peaks/valleys deviate from the mean radius (mm). */
+  lobeDepth: number;
   /** Outer diameter at the base (bottom) of the body (mm). For polygon = circumscribed. */
   bodyDiameter: number;
   /** Outer diameter at the top of the body (mm). Equal to bodyDiameter = straight cylinder. */
@@ -124,14 +128,16 @@ export type SurfaceTexture = "none" | "flutes" | "helical" | "diamond";
 /** Day 9: base flange — none or a wider skirt at the bottom. */
 export type SkirtStyle = "none" | "flange";
 
-/** Day 11: body cross-section — round or a regular polygon. */
-export type BodyShape = "round" | "polygon";
+/** Day 11/17: body cross-section — round, regular polygon, or lobed (wavy). */
+export type BodyShape = "round" | "polygon" | "lobed";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
   bodyShape: "round",
   polygonSides: 6,
   cornerRadius: 1,
+  lobeCount: 6,
+  lobeDepth: 1.5,
   bodyDiameter: 20,
   topDiameter: 20,
   bodyHeight: 16,
@@ -174,24 +180,34 @@ export function shaftSocketRadius(params: KnobParams): number {
   return SHAFTS[params.shaft].outerDiameter / 2 + params.shaftClearance;
 }
 
-/** Inscribed-radius factor for a polygon body (1 for round). */
+/** Inscribed-radius factor for a polygon body (1 for round/lobed). */
 function inradiusFactor(params: KnobParams): number {
   return params.bodyShape === "polygon" ? Math.cos(Math.PI / params.polygonSides) : 1;
 }
 
 /**
- * Effective outer radius of a body section at the given diameter (mm).
- * For a polygon this is the inscribed radius (face center) — the limiting
- * radius for top features and socket clearance.
+ * The limiting *inner* radius of a body section (mm): the closest the outer
+ * surface gets to the axis. Polygon = inscribed radius (face center); lobed =
+ * valley radius (mean − lobe depth); round = the radius itself. Drives top
+ * features and socket clearance.
  */
 export function bodyOuterRadius(diameter: number, params: KnobParams): number {
+  if (params.bodyShape === "lobed") return diameter / 2 - params.lobeDepth;
   return (diameter / 2) * inradiusFactor(params);
 }
 
 /** Smallest body diameter that still leaves MIN_WALL around the socket (mm). */
 export function minBodyDiameter(params: KnobParams): number {
-  const needed = shaftSocketRadius(params) + MIN_WALL; // required inscribed radius
+  const needed = shaftSocketRadius(params) + MIN_WALL; // required inner radius
+  if (params.bodyShape === "lobed") return Math.ceil((needed + params.lobeDepth) * 2);
   return Math.ceil((needed / inradiusFactor(params)) * 2);
+}
+
+/** Largest lobe depth (amplitude) that keeps the valley clear of the socket (mm). */
+export function maxLobeDepth(params: KnobParams): number {
+  const meanR = Math.min(params.bodyDiameter, params.topDiameter) / 2;
+  const room = meanR - shaftSocketRadius(params) - MIN_WALL;
+  return Math.max(0.3, Math.min(meanR * 0.45, Math.floor(room * 10) / 10));
 }
 
 /** Largest corner-rounding radius for the current polygon size (mm). */
@@ -312,9 +328,11 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
 
   const p: KnobParams = {
     shaft: pick(input.shaft, ["EC11", "EC12E"], d.shaft),
-    bodyShape: pick(input.bodyShape, ["round", "polygon"], d.bodyShape),
+    bodyShape: pick(input.bodyShape, ["round", "polygon", "lobed"], d.bodyShape),
     polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
     cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
+    lobeCount: cl(Math.round(num(input.lobeCount, d.lobeCount)), 3, 12),
+    lobeDepth: Math.max(0.3, num(input.lobeDepth, d.lobeDepth)),
     bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
     bodyBulge: num(input.bodyBulge, d.bodyBulge),
     bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
@@ -351,6 +369,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   };
 
   // Apply the interdependent dynamic limits in dependency order.
+  if (p.bodyShape === "lobed") p.lobeDepth = Math.min(p.lobeDepth, maxLobeDepth(p));
   const minDia = minBodyDiameter(p);
   p.bodyDiameter = Math.max(minDia, p.bodyDiameter);
   p.topDiameter = Math.max(minDia, p.topDiameter);
