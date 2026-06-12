@@ -119,6 +119,17 @@ export const PRESETS: KnobPreset[] = [
     knurlAngle: 25,
     indicator: "line",
   }),
+  preset("chickenhead", "チキンヘッド", "指針型・面取りなし", {
+    bodyShape: "pointer",
+    bodyDiameter: 20,
+    topDiameter: 20,
+    bodyHeight: 14,
+    pointerLength: 9,
+    topEdgeStyle: "none",
+    topStyle: "flat",
+    indicator: "none",
+    indicatorAngle: 90,
+  }),
   preset("lobed", "花形ロブ", "波型6山・リセス", {
     bodyShape: "lobed",
     lobeCount: 6,

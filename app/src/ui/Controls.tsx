@@ -32,6 +32,7 @@ const BODY_SHAPE_LABELS: Record<BodyShape, string> = {
   round: "丸（円）",
   polygon: "多角形",
   lobed: "波型（ロブ）",
+  pointer: "指針（チキンヘッド）",
 };
 
 const SKIRT_LABELS: Record<SkirtStyle, string> = {
@@ -225,6 +226,19 @@ export function Controls({
               onChange={(v) => set({ lobeDepth: v })}
             />
             <p className="hint">断面を波打たせた花びら/歯車風。径=山の平均</p>
+          </>
+        )}
+        {params.bodyShape === "pointer" && (
+          <>
+            <Slider
+              label="指針の長さ"
+              value={params.pointerLength}
+              min={1}
+              max={30}
+              step={1}
+              onChange={(v) => set({ pointerLength: v })}
+            />
+            <p className="hint">本体が指針になる涙滴型。向きは「指標 → 位置（角度）」で調整</p>
           </>
         )}
       </section>

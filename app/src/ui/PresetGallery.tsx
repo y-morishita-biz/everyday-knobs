@@ -33,6 +33,25 @@ function PresetGlyph({ p }: { p: KnobParams }) {
       pts.push(`${x},${y}`);
     }
     outline = <polygon points={pts.join(" ")} className="glyph__body" />;
+  } else if (p.bodyShape === "pointer") {
+    const rr = R - 4;
+    const dApex = rr + Math.min(R + 4, (p.pointerLength / (p.bodyDiameter / 2)) * rr);
+    const beta = Math.acos(Math.min(0.999, rr / dApex));
+    const ia = (p.indicatorAngle * Math.PI) / 180;
+    const rot = (x: number, y: number): [number, number] => [
+      C + (x * Math.cos(ia) - y * Math.sin(ia)),
+      C + (x * Math.sin(ia) + y * Math.cos(ia)),
+    ];
+    const pts: string[] = [];
+    const a0 = beta;
+    const a1 = 2 * Math.PI - beta;
+    const segs = 28;
+    for (let i = 0; i <= segs; i++) {
+      const a = a0 + (i / segs) * (a1 - a0);
+      pts.push(rot(rr * Math.cos(a), rr * Math.sin(a)).join(","));
+    }
+    pts.push(rot(dApex, 0).join(","));
+    outline = <polygon points={pts.join(" ")} className="glyph__body" />;
   } else {
     outline = <circle cx={C} cy={C} r={R} className="glyph__body" />;
   }

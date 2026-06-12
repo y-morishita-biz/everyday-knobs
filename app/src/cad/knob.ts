@@ -71,7 +71,7 @@ function socketLeadIn(params: KnobParams, cx: number, zBase: number, faceUp: boo
  * polygon or lobed) that OCCT cannot reliably chamfer or fillet.
  */
 function hasComplexRim(params: KnobParams): boolean {
-  if (params.bodyShape === "lobed") return true;
+  if (params.bodyShape === "lobed" || params.bodyShape === "pointer") return true;
   return (
     params.bodyShape === "polygon" &&
     Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05
@@ -109,10 +109,31 @@ function lobedDrawing(meanR: number, params: KnobParams): Drawing {
   return pen!.close();
 }
 
-/** Cross-section drawing (circle, polygon, or lobed) for the body at a diameter. */
+/**
+ * Teardrop "chicken-head" drawing: a circle of radius `rr` with a beak that
+ * extends `pointerLength` beyond it, the whole shape rotated so the beak points
+ * along `indicatorAngle`.
+ */
+function teardropDrawing(rr: number, params: KnobParams): Drawing {
+  const dApex = rr + Math.max(1, params.pointerLength);
+  const beta = Math.acos(Math.min(0.999, rr / dApex)); // tangent-point angle
+  const ang = (params.indicatorAngle * Math.PI) / 180;
+  const rot = (x: number, y: number): [number, number] => [
+    x * Math.cos(ang) - y * Math.sin(ang),
+    x * Math.sin(ang) + y * Math.cos(ang),
+  ];
+  const tPlus = rot(rr * Math.cos(beta), rr * Math.sin(beta));
+  const tMinus = rot(rr * Math.cos(beta), -rr * Math.sin(beta));
+  const back = rot(-rr, 0);
+  const apex = rot(dApex, 0);
+  return draw(tPlus).threePointsArcTo(tMinus, back).lineTo(apex).close();
+}
+
+/** Cross-section drawing (circle, polygon, lobed, or pointer) at a diameter. */
 function sectionDrawing(diameter: number, params: KnobParams): Drawing {
   if (params.bodyShape === "polygon") return polygonDrawing(diameter / 2, params);
   if (params.bodyShape === "lobed") return lobedDrawing(diameter / 2, params);
+  if (params.bodyShape === "pointer") return teardropDrawing(diameter / 2, params);
   return drawCircle(diameter / 2);
 }
 
