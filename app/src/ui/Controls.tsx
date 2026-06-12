@@ -3,6 +3,7 @@ import { PresetGallery } from "./PresetGallery";
 import type { KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
+  bulgeRange,
   clampParams,
   minBodyDiameter,
   maxFluteDepth,
@@ -229,6 +230,19 @@ export function Controls({
           step={1}
           onChange={(v) => set({ bodyHeight: v })}
         />
+        {params.bodyShape === "round" && (
+          <>
+            <Slider
+              label="胴のふくらみ"
+              value={params.bodyBulge}
+              min={bulgeRange(params)[0]}
+              max={bulgeRange(params)[1]}
+              step={0.5}
+              onChange={(v) => set({ bodyBulge: v })}
+            />
+            <p className="hint">＋で樽型、−でくびれ（鼓）。0で直胴/テーパー</p>
+          </>
+        )}
       </section>
 
       <section className="group">
