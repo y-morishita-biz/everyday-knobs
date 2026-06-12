@@ -47,6 +47,8 @@ export interface KnobParams {
   lobeCount: number;
   /** Lobe amplitude — how far peaks/valleys deviate from the mean radius (mm). */
   lobeDepth: number;
+  /** Beak length beyond the round part when bodyShape is pointer (chicken-head), mm. */
+  pointerLength: number;
   /** Outer diameter at the base (bottom) of the body (mm). For polygon = circumscribed. */
   bodyDiameter: number;
   /** Outer diameter at the top of the body (mm). Equal to bodyDiameter = straight cylinder. */
@@ -128,8 +130,8 @@ export type SurfaceTexture = "none" | "flutes" | "helical" | "diamond";
 /** Day 9: base flange — none or a wider skirt at the bottom. */
 export type SkirtStyle = "none" | "flange";
 
-/** Day 11/17: body cross-section — round, regular polygon, or lobed (wavy). */
-export type BodyShape = "round" | "polygon" | "lobed";
+/** Day 11/17/18: body cross-section — round, polygon, lobed, or pointer (chicken-head). */
+export type BodyShape = "round" | "polygon" | "lobed" | "pointer";
 
 export const DEFAULT_PARAMS: KnobParams = {
   shaft: "EC11",
@@ -138,6 +140,7 @@ export const DEFAULT_PARAMS: KnobParams = {
   cornerRadius: 1,
   lobeCount: 6,
   lobeDepth: 1.5,
+  pointerLength: 7,
   bodyDiameter: 20,
   topDiameter: 20,
   bodyHeight: 16,
@@ -328,11 +331,12 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
 
   const p: KnobParams = {
     shaft: pick(input.shaft, ["EC11", "EC12E"], d.shaft),
-    bodyShape: pick(input.bodyShape, ["round", "polygon", "lobed"], d.bodyShape),
+    bodyShape: pick(input.bodyShape, ["round", "polygon", "lobed", "pointer"], d.bodyShape),
     polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
     cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
     lobeCount: cl(Math.round(num(input.lobeCount, d.lobeCount)), 3, 12),
     lobeDepth: Math.max(0.3, num(input.lobeDepth, d.lobeDepth)),
+    pointerLength: cl(num(input.pointerLength, d.pointerLength), 1, 30),
     bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
     bodyBulge: num(input.bodyBulge, d.bodyBulge),
     bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
