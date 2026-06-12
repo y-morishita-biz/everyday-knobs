@@ -89,12 +89,33 @@ function sectionDrawing(diameter: number, params: KnobParams): Drawing {
     : drawCircle(diameter / 2);
 }
 
-/** Solid body: round or polygon, straight or tapered (frustum / prism). */
+/**
+ * Curved round body via revolving a side profile: base → arc through the
+ * mid-height point (offset by `bulge`) → top, closed along the axis. Positive
+ * bulge gives a barrel, negative a waist.
+ */
+function buildRevolvedBody(params: KnobParams): Solid {
+  const baseR = params.bodyDiameter / 2;
+  const topR = params.topDiameter / 2;
+  const H = params.bodyHeight;
+  const mid = (baseR + topR) / 2 + params.bodyBulge;
+  const profile = draw([0, 0])
+    .lineTo([baseR, 0])
+    .threePointsArcTo([topR, H], [mid, H / 2])
+    .lineTo([0, H])
+    .close();
+  return profile.sketchOnPlane("XZ").revolve([0, 0, 1]) as Solid;
+}
+
+/** Solid body: round or polygon, straight, tapered, or curved (barrel/waist). */
 function buildBody(params: KnobParams): Solid {
   const baseR = params.bodyDiameter / 2;
   const topR = params.topDiameter / 2;
   const straight = Math.abs(baseR - topR) < 0.01;
 
+  if (params.bodyShape === "round" && Math.abs(params.bodyBulge) > 0.05) {
+    return buildRevolvedBody(params);
+  }
   if (params.bodyShape === "round" && straight) {
     return makeCylinder(baseR, params.bodyHeight) as Solid;
   }
@@ -254,8 +275,14 @@ function applyTexture(body: Solid, params: KnobParams): Solid {
   // Reference radius at the band's mid-height keeps the groove root wall constant.
   const baseR = params.bodyDiameter / 2;
   const topR = params.topDiameter / 2;
+  const H = params.bodyHeight;
   const midZ = zStart + bandHeight / 2;
-  const refR = baseR + (topR - baseR) * (midZ / params.bodyHeight);
+  // Follow the curved (barrel/waist) surface so cutters reach it at mid-band.
+  const bulgeAt =
+    params.bodyShape === "round" && Math.abs(params.bodyBulge) > 0.05
+      ? params.bodyBulge * (1 - Math.pow((midZ - H / 2) / (H / 2), 2))
+      : 0;
+  const refR = baseR + (topR - baseR) * (midZ / H) + bulgeAt;
   const widthRatio = Math.min(1.2, Math.max(0.4, params.fluteWidthPercent / 100));
   const cutR = Math.max(0.3, ((Math.PI * refR) / n) * widthRatio);
   const dist = refR - depth + cutR;

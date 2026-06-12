@@ -49,6 +49,8 @@ export interface KnobParams {
   topDiameter: number;
   /** Total height of the body (mm). */
   bodyHeight: number;
+  /** Side-profile bulge at mid-height (mm, round body only): + barrel, − waist. */
+  bodyBulge: number;
   /** Radial clearance added to the shaft socket for fit (mm). Negative = press fit. */
   shaftClearance: number;
   /** Depth of the shaft socket measured from the bottom face (mm). */
@@ -133,6 +135,7 @@ export const DEFAULT_PARAMS: KnobParams = {
   bodyDiameter: 20,
   topDiameter: 20,
   bodyHeight: 16,
+  bodyBulge: 0,
   shaftClearance: 0.15,
   shaftHoleDepth: 12,
   bottomChamfer: 0,
@@ -259,11 +262,26 @@ export function midBodyRadius(params: KnobParams): number {
 }
 
 /**
+ * Allowed range for the side-profile bulge (mm). Waist (negative) is bounded so
+ * the narrowest point keeps MIN_WALL+0.5 around the socket; barrel (positive)
+ * is capped for sane proportions. Round bodies only.
+ */
+export function bulgeRange(params: KnobParams): [number, number] {
+  const midR = midBodyRadius(params);
+  const minR = shaftSocketRadius(params) + MIN_WALL + 0.5;
+  const min = -Math.max(0, midR - minR);
+  const max = Math.min(10, midR * 0.8);
+  return [Math.ceil(min * 2) / 2, Math.floor(max * 2) / 2];
+}
+
+/**
  * Deepest a flute can bite while keeping a wall of at least 1.0mm between the
  * flute root and the shaft socket (mm), capped for sane proportions.
  */
 export function maxFluteDepth(params: KnobParams): number {
-  const room = midBodyRadius(params) - shaftSocketRadius(params) - 1.0;
+  // A waist (negative bulge) narrows the mid radius — account for it.
+  const waist = params.bodyShape === "round" ? Math.min(0, params.bodyBulge) : 0;
+  const room = midBodyRadius(params) + waist - shaftSocketRadius(params) - 1.0;
   return Math.max(0, Math.min(1.5, Math.floor(room * 10) / 10));
 }
 
@@ -298,6 +316,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
     cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
     bodyHeight: cl(num(input.bodyHeight, d.bodyHeight), 4, 40),
+    bodyBulge: num(input.bodyBulge, d.bodyBulge),
     bodyDiameter: cl(num(input.bodyDiameter, d.bodyDiameter), 6, 60),
     topDiameter: cl(num(input.topDiameter, d.topDiameter), 6, 60),
     shaftClearance: cl(num(input.shaftClearance, d.shaftClearance), -0.1, 0.6),
@@ -345,5 +364,12 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   p.skirtDiameter = Math.max(minSkirtDiameter(p), p.skirtDiameter);
   p.skirtHeight = Math.min(p.skirtHeight, maxSkirtHeight(p));
   p.cornerRadius = Math.min(p.cornerRadius, maxCornerRadius(p));
+  // Bulge applies to round bodies only; clamp to its safe range.
+  if (p.bodyShape !== "round") {
+    p.bodyBulge = 0;
+  } else {
+    const [lo, hi] = bulgeRange(p);
+    p.bodyBulge = Math.min(hi, Math.max(lo, p.bodyBulge));
+  }
   return p;
 }

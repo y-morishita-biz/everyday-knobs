@@ -119,6 +119,18 @@ export const PRESETS: KnobPreset[] = [
     knurlAngle: 25,
     indicator: "line",
   }),
+  preset("barrel", "バレルグリップ", "樽型・縦溝", {
+    bodyShape: "round",
+    bodyDiameter: 18,
+    topDiameter: 18,
+    bodyHeight: 18,
+    bodyBulge: 4,
+    topEdgeStyle: "fillet",
+    topEdgeSize: 1.5,
+    surfaceTexture: "flutes",
+    fluteCount: 28,
+    indicator: "line",
+  }),
   preset("dial", "目盛りダイヤル", "弧目盛り・指標", {
     bodyShape: "round",
     bodyDiameter: 24,
