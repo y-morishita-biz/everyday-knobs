@@ -66,6 +66,18 @@ function socketLeadIn(params: KnobParams, cx: number, zBase: number, faceUp: boo
   return wide.loftWith(narrow, { ruled: true }) as Solid;
 }
 
+/**
+ * Whether the body's top/bottom rim is a tangent line+arc chain (rounded
+ * polygon or lobed) that OCCT cannot reliably chamfer or fillet.
+ */
+function hasComplexRim(params: KnobParams): boolean {
+  if (params.bodyShape === "lobed") return true;
+  return (
+    params.bodyShape === "polygon" &&
+    Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05
+  );
+}
+
 /** A regular polygon drawing with optional rounded corners, circumradius `rc`. */
 function polygonDrawing(rc: number, params: KnobParams): Drawing {
   const n = params.polygonSides;
@@ -82,11 +94,26 @@ function polygonDrawing(rc: number, params: KnobParams): Drawing {
   return d;
 }
 
-/** Cross-section drawing (circle or polygon) for the body at a given diameter. */
+/** A lobed (wavy) closed drawing: radius modulated by cos(lobes·θ), mean `meanR`. */
+function lobedDrawing(meanR: number, params: KnobParams): Drawing {
+  const n = params.lobeCount;
+  const amp = Math.min(params.lobeDepth, meanR - 0.5);
+  const steps = Math.max(96, n * 16);
+  let pen: ReturnType<typeof draw> | null = null;
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * 2 * Math.PI;
+    const r = meanR + amp * Math.cos(n * a);
+    const pt: [number, number] = [Math.cos(a) * r, Math.sin(a) * r];
+    pen = pen ? pen.lineTo(pt) : draw(pt);
+  }
+  return pen!.close();
+}
+
+/** Cross-section drawing (circle, polygon, or lobed) for the body at a diameter. */
 function sectionDrawing(diameter: number, params: KnobParams): Drawing {
-  return params.bodyShape === "polygon"
-    ? polygonDrawing(diameter / 2, params)
-    : drawCircle(diameter / 2);
+  if (params.bodyShape === "polygon") return polygonDrawing(diameter / 2, params);
+  if (params.bodyShape === "lobed") return lobedDrawing(diameter / 2, params);
+  return drawCircle(diameter / 2);
 }
 
 /**
@@ -139,14 +166,9 @@ function buildBody(params: KnobParams): Solid {
 function applyTopEdge(body: Solid, params: KnobParams): Solid {
   const size = Math.min(params.topEdgeSize, maxTopEdgeSize(params));
   if (params.topEdgeStyle === "none" || size <= 0) return body;
-  // A rounded-polygon top edge is a chain of tangent line+arc segments that
-  // OCCT cannot reliably chamfer/fillet; skip the rim treatment there.
-  if (
-    params.bodyShape === "polygon" &&
-    Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05
-  ) {
-    return body;
-  }
+  // Rounded-polygon and lobed top rims are tangent line/arc chains OCCT cannot
+  // reliably chamfer/fillet; skip the rim treatment there.
+  if (hasComplexRim(params)) return body;
   const topEdge = (e: import("replicad").EdgeFinder) =>
     e.inPlane("XY", params.bodyHeight);
   return params.topEdgeStyle === "chamfer"
@@ -345,10 +367,7 @@ function applyBottomChamfer(body: Solid, params: KnobParams): Solid {
   const size = Math.min(params.bottomChamfer, 0.6);
   if (size <= 0.05) return body;
   const straight = Math.abs(params.bodyDiameter - params.topDiameter) < 0.02;
-  const roundedPolygon =
-    params.bodyShape === "polygon" &&
-    Math.min(params.cornerRadius, maxCornerRadius(params)) > 0.05;
-  const cleanBottom = params.skirt === "flange" || (straight && !roundedPolygon);
+  const cleanBottom = params.skirt === "flange" || (straight && !hasComplexRim(params));
   if (!cleanBottom) return body;
   try {
     return body.chamfer(size, (e) => e.inPlane("XY", 0)) as Solid;
