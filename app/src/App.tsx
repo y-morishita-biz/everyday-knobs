@@ -7,6 +7,7 @@ import { loadMyPresets, saveMyPresets } from "./cad/myPresets";
 import { randomParams } from "./cad/random";
 import { useKnobMesh } from "./cad/useKnobMesh";
 import { useUndoableParams } from "./cad/useUndoableParams";
+import { useTheme } from "./useTheme";
 import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
 import { Viewer } from "./viewer/Viewer";
@@ -29,6 +30,7 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [myPresets, setMyPresets] = useState<KnobPreset[]>(loadMyPresets);
+  const [theme, toggleTheme] = useTheme();
 
   // Preview mesh is driven by a coalescing, two-phase scheduler (see the hook).
   const { mesh, busy, phase, buildError } = useKnobMesh(params);
@@ -205,10 +207,12 @@ export default function App() {
         myPresets={myPresets}
         onSavePreset={handleSavePreset}
         onDeletePreset={handleDeletePreset}
+        theme={theme}
+        onToggleTheme={toggleTheme}
         error={error}
         notice={notice}
       />
-      <Viewer mesh={mesh} />
+      <Viewer mesh={mesh} theme={theme} />
     </div>
   );
 }
