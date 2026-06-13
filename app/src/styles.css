@@ -400,3 +400,58 @@ body {
 .viewer canvas {
   display: block;
 }
+
+/* ---- Responsive / mobile (Day 22) ---- */
+
+@media (max-width: 760px) {
+  .app {
+    grid-template-columns: 1fr;
+    /* dvh tracks the real visible height as mobile browser chrome shows/hides */
+    grid-template-rows: 44dvh 1fr;
+    height: 100dvh;
+  }
+
+  .viewer {
+    grid-row: 1;
+    min-height: 0;
+  }
+
+  .panel {
+    grid-row: 2;
+    min-height: 0;
+    border-right: none;
+    border-top: 1px solid var(--border);
+    padding: 14px 14px 28px;
+  }
+
+  .panel__title {
+    font-size: 18px;
+  }
+
+  .panel__subtitle {
+    margin-bottom: 12px;
+  }
+
+  .gallery {
+    grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  }
+}
+
+/* Bigger hit targets on touch devices */
+@media (pointer: coarse) {
+  .toggle__btn,
+  .export button,
+  .acc__head,
+  .code-apply button,
+  .order-btn {
+    min-height: 44px;
+  }
+
+  .slider input[type="range"] {
+    height: 28px;
+  }
+
+  .slider {
+    margin-top: 12px;
+  }
+}
