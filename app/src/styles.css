@@ -1,12 +1,48 @@
+:root,
+:root[data-theme="dark"] {
+  --bg: #262a31;
+  --panel: #262a31;
+  --panel-2: #2b2f37;
+  --text: #d4d9e3;
+  --muted: #8b92a3;
+  --accent: #9d7bff;
+  --accent-text: #ffffff;
+  --border: transparent;
+  /* Neumorphic dual shadows */
+  --sh-dark: #1e2127;
+  --sh-light: #30343d;
+  --viewer-bg: #21242a;
+  --grid-1: #3a3f4b;
+  --grid-2: #2a2e36;
+}
+
+:root[data-theme="light"] {
+  --bg: #e6e9f0;
+  --panel: #e6e9f0;
+  --panel-2: #eaedf4;
+  --text: #4a4f63;
+  --muted: #8b90a4;
+  --accent: #7c5cff;
+  --accent-text: #ffffff;
+  --border: transparent;
+  --sh-dark: #c5c9d6;
+  --sh-light: #ffffff;
+  --viewer-bg: #e1e5ee;
+  --grid-1: #c4c9d6;
+  --grid-2: #d4d8e2;
+}
+
 :root {
-  --bg: #1a1d23;
-  --panel: #23272f;
-  --panel-2: #2c313a;
-  --text: #e6e8eb;
-  --muted: #9aa3af;
-  --accent: #b46cc4;
-  --border: #353b45;
   font-family: system-ui, "Helvetica Neue", Arial, sans-serif;
+  /* Reusable neumorphism shadow recipes */
+  --neu-raised: 5px 5px 11px var(--sh-dark), -5px -5px 11px var(--sh-light);
+  --neu-raised-sm: 3px 3px 6px var(--sh-dark), -3px -3px 6px var(--sh-light);
+  --neu-inset: inset 3px 3px 6px var(--sh-dark), inset -3px -3px 6px var(--sh-light);
+  --neu-inset-sm: inset 2px 2px 4px var(--sh-dark), inset -2px -2px 4px var(--sh-light);
+}
+
+body {
+  transition: background 0.25s, color 0.25s;
 }
 
 * {
@@ -585,4 +621,206 @@ body {
   .slider {
     margin-top: 12px;
   }
+}
+
+/* ============================================================
+   Neumorphism skin (Day 26) — soft extruded surfaces, no hard
+   borders. Active/selected elements are pressed (inset).
+   ============================================================ */
+
+.panel {
+  border-right: none;
+}
+
+/* Theme toggle + action row */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.topbar .actions {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 12px;
+  border: none;
+  background: var(--panel);
+  color: var(--text);
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: var(--neu-raised-sm);
+}
+
+.theme-toggle:active {
+  box-shadow: var(--neu-inset-sm);
+}
+
+.actions button,
+.export button,
+.code-apply button,
+.viewer__tools button,
+.mypreset-save {
+  border: none !important;
+  background: var(--panel) !important;
+  box-shadow: var(--neu-raised-sm);
+  transition: box-shadow 0.15s, color 0.15s;
+}
+
+.actions button:hover:not(:disabled),
+.export button:hover:not(:disabled),
+.viewer__tools button:hover,
+.mypreset-save:hover {
+  color: var(--accent);
+}
+
+.actions button:active:not(:disabled),
+.export button:active,
+.code-apply button:active,
+.viewer__tools button:active {
+  box-shadow: var(--neu-inset-sm);
+}
+
+.actions button:disabled {
+  box-shadow: var(--neu-inset-sm);
+}
+
+/* Accent buttons (random, order/share, save) */
+.actions__random,
+.order-btn,
+.viewer__tools button.is-active {
+  background: var(--accent) !important;
+  color: var(--accent-text) !important;
+  box-shadow: var(--neu-raised-sm);
+  border: none !important;
+}
+
+.order-btn {
+  width: 100%;
+}
+
+/* Accordion sections become raised cards */
+.acc {
+  border: none;
+  background: var(--panel);
+  border-radius: 16px;
+  box-shadow: var(--neu-raised);
+  margin-bottom: 14px;
+  overflow: visible;
+}
+
+.acc__head:hover {
+  background: none;
+  color: var(--accent);
+}
+
+.acc.is-open {
+  box-shadow: var(--neu-inset-sm);
+}
+
+/* Toggle buttons */
+.toggle__btn {
+  border: none;
+  background: var(--panel);
+  box-shadow: var(--neu-raised-sm);
+  transition: box-shadow 0.15s, color 0.15s;
+}
+
+.toggle__btn:hover {
+  color: var(--accent);
+}
+
+.toggle__btn.is-active {
+  background: var(--panel);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: var(--neu-inset);
+}
+
+/* Range sliders: inset groove + raised thumb */
+.slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--panel);
+  box-shadow: var(--neu-inset-sm);
+  outline: none;
+}
+
+.slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--neu-raised-sm);
+  cursor: pointer;
+}
+
+.slider input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--neu-raised-sm);
+  cursor: pointer;
+}
+
+/* Preset cards */
+.preset {
+  border: none;
+  background: var(--panel);
+  box-shadow: var(--neu-raised-sm);
+  transition: box-shadow 0.15s;
+}
+
+.preset:hover {
+  background: var(--panel);
+}
+
+.preset.is-active {
+  background: var(--panel);
+  box-shadow: var(--neu-inset);
+}
+
+.preset__del {
+  background: var(--panel);
+  box-shadow: var(--neu-raised-sm);
+}
+
+/* Text inputs become inset */
+.code-input {
+  border: none;
+  background: var(--panel);
+  box-shadow: var(--neu-inset-sm);
+}
+
+.code-input:focus {
+  box-shadow: var(--neu-inset-sm), 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Floating viewer toolbar: solid neumorphic chips */
+.viewer__tools button {
+  backdrop-filter: none;
+}
+
+/* Status pill */
+.status {
+  margin-top: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--neu-inset-sm);
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
 }

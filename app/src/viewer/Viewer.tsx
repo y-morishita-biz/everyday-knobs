@@ -18,11 +18,17 @@ interface SceneState {
   camera: THREE.PerspectiveCamera;
   controls: OrbitControls;
   model: THREE.Group;
+  grid: THREE.GridHelper;
   resize: () => void;
   frame: number;
 }
 
-export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
+const cssColor = (name: string, fallback: string) => {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return new THREE.Color(v || fallback);
+};
+
+export function Viewer({ mesh, theme }: { mesh: MeshPayload | null; theme: string }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SceneState | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -78,7 +84,6 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
     mount.appendChild(renderer.domElement);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1d23);
 
     const camera = new THREE.PerspectiveCamera(
       45,
@@ -101,7 +106,7 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
     fill.position.set(-30, 10, -20);
     scene.add(fill);
 
-    const grid = new THREE.GridHelper(60, 12, 0x3a3f4b, 0x2a2e36);
+    const grid = new THREE.GridHelper(60, 12, cssColor("--grid-1", "#3a3f4b"), cssColor("--grid-2", "#2a2e36"));
     scene.add(grid);
 
     // Z is "up" in the CAD model; rotate the model group so it sits on the grid.
@@ -122,12 +127,15 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
     const observer = new ResizeObserver(resize);
     observer.observe(mount);
 
+    scene.background = cssColor("--viewer-bg", "#1a1d23");
+
     const state: SceneState = {
       renderer,
       scene,
       camera,
       controls,
       model,
+      grid,
       resize,
       frame: 0,
     };
@@ -149,6 +157,19 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
       stateRef.current = null;
     };
   }, []);
+
+  // Recolor the scene background + grid when the theme changes.
+  useEffect(() => {
+    const s = stateRef.current;
+    if (!s) return;
+    s.scene.background = cssColor("--viewer-bg", "#1a1d23");
+    s.scene.remove(s.grid);
+    s.grid.geometry.dispose();
+    (s.grid.material as THREE.Material).dispose();
+    const grid = new THREE.GridHelper(60, 12, cssColor("--grid-1", "#3a3f4b"), cssColor("--grid-2", "#2a2e36"));
+    s.scene.add(grid);
+    s.grid = grid;
+  }, [theme]);
 
   // Rebuild the displayed geometry whenever a new mesh arrives.
   useEffect(() => {
