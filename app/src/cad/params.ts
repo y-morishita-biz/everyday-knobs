@@ -123,9 +123,16 @@ export type TickRing = "none" | "ticks";
 
 /**
  * Side-wall texture.
- * Day 6: none / flutes (vertical). Day 10: helical (diagonal) / diamond (cross-hatch).
+ * Day 6: none / flutes (vertical). Day 10: helical / diamond. Day 19: rings
+ * (horizontal grooves) / scallops (finger scoops).
  */
-export type SurfaceTexture = "none" | "flutes" | "helical" | "diamond";
+export type SurfaceTexture =
+  | "none"
+  | "flutes"
+  | "helical"
+  | "diamond"
+  | "rings"
+  | "scallops";
 
 /** Day 9: base flange — none or a wider skirt at the bottom. */
 export type SkirtStyle = "none" | "flange";
@@ -360,10 +367,10 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     tickSpan: cl(num(input.tickSpan, d.tickSpan), 60, 360),
     surfaceTexture: pick(
       input.surfaceTexture,
-      ["none", "flutes", "helical", "diamond"],
+      ["none", "flutes", "helical", "diamond", "rings", "scallops"],
       d.surfaceTexture,
     ),
-    fluteCount: cl(Math.round(num(input.fluteCount, d.fluteCount)), 8, 48),
+    fluteCount: cl(Math.round(num(input.fluteCount, d.fluteCount)), 3, 48),
     fluteDepth: Math.max(0.2, num(input.fluteDepth, d.fluteDepth)),
     fluteWidthPercent: cl(num(input.fluteWidthPercent, d.fluteWidthPercent), 40, 120),
     knurlAngle: cl(num(input.knurlAngle, d.knurlAngle), 10, 30),

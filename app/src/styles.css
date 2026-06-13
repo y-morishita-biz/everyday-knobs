@@ -177,6 +177,20 @@ body {
   opacity: 1;
 }
 
+.glyph__ringline {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.glyph__scoop {
+  fill: color-mix(in srgb, var(--accent) 30%, transparent);
+  stroke: var(--accent);
+  stroke-width: 0.8;
+  opacity: 0.85;
+}
+
 .glyph__ind {
   stroke: var(--text);
   stroke-width: 1.6;
