@@ -1,7 +1,16 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import type { MeshPayload } from "../worker/cad.worker";
+
+type ViewKind = "iso" | "front" | "top";
+
+/** Camera directions per view preset (three.js space: Y up). */
+const VIEW_DIRS: Record<ViewKind, THREE.Vector3> = {
+  iso: new THREE.Vector3(1, 0.75, 1).normalize(),
+  front: new THREE.Vector3(0, 0.3, 1).normalize(),
+  top: new THREE.Vector3(0, 1, 0.0001).normalize(),
+};
 
 interface SceneState {
   renderer: THREE.WebGLRenderer;
@@ -16,6 +25,49 @@ interface SceneState {
 export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SceneState | null>(null);
+  const [autoRotate, setAutoRotate] = useState(false);
+
+  /** Frame the model: aim at its center, back the camera off by its size. */
+  const frameModel = (dir?: THREE.Vector3) => {
+    const s = stateRef.current;
+    if (!s) return;
+    const box = new THREE.Box3().setFromObject(s.model);
+    if (box.isEmpty()) return;
+    const center = box.getCenter(new THREE.Vector3());
+    const radius = box.getSize(new THREE.Vector3()).length() / 2;
+    const fov = (s.camera.fov * Math.PI) / 180;
+    const dist = (radius / Math.tan(fov / 2)) * 1.35;
+    const d =
+      dir ?? s.camera.position.clone().sub(s.controls.target).normalize();
+    s.controls.target.copy(center);
+    s.camera.position.copy(center.clone().add(d.multiplyScalar(dist)));
+    s.camera.updateProjectionMatrix();
+  };
+
+  const setView = (kind: ViewKind) => frameModel(VIEW_DIRS[kind].clone());
+
+  const toggleRotate = () => {
+    const s = stateRef.current;
+    if (!s) return;
+    s.controls.autoRotate = !s.controls.autoRotate;
+    setAutoRotate(s.controls.autoRotate);
+  };
+
+  /** Render one fresh frame, then save the canvas as a PNG. */
+  const capturePng = () => {
+    const s = stateRef.current;
+    if (!s) return;
+    s.renderer.render(s.scene, s.camera);
+    s.renderer.domElement.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `everyday-knob-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }, "image/png");
+  };
 
   // One-time scene setup.
   useEffect(() => {
@@ -38,6 +90,7 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
+    controls.autoRotateSpeed = 2.5;
     controls.target.set(0, 8, 0);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
@@ -137,5 +190,33 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
     }
   }, [mesh]);
 
-  return <div ref={mountRef} className="viewer" />;
+  return (
+    <div className="viewer">
+      <div ref={mountRef} className="viewer__canvas" />
+      <div className="viewer__tools">
+        <button title="全体が収まるようにフィット" onClick={() => frameModel()}>
+          ⛶ フィット
+        </button>
+        <button title="斜めから" onClick={() => setView("iso")}>
+          斜め
+        </button>
+        <button title="正面から" onClick={() => setView("front")}>
+          正面
+        </button>
+        <button title="真上から" onClick={() => setView("top")}>
+          上
+        </button>
+        <button
+          title="自動回転"
+          className={autoRotate ? "is-active" : undefined}
+          onClick={toggleRotate}
+        >
+          ⟳ 回転
+        </button>
+        <button title="表示中のビューをPNG保存" onClick={capturePng}>
+          📷 PNG
+        </button>
+      </div>
+    </div>
+  );
 }
