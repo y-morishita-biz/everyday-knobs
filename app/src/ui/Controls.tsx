@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { PresetGallery, MyPresetGallery } from "./PresetGallery";
+import { AppearanceMenu } from "./AppearanceMenu";
 import { PRESETS, type KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
@@ -101,7 +102,9 @@ interface ControlsProps {
   onSavePreset: () => void;
   onDeletePreset: (id: string) => void;
   theme: "light" | "dark";
-  onToggleTheme: () => void;
+  onSetTheme: (t: "light" | "dark") => void;
+  accent: string | null;
+  onSetAccent: (hex: string | null) => void;
   error: string | null;
   notice: string | null;
 }
@@ -194,7 +197,9 @@ export function Controls({
   onSavePreset,
   onDeletePreset,
   theme,
-  onToggleTheme,
+  onSetTheme,
+  accent,
+  onSetAccent,
   error,
   notice,
 }: ControlsProps) {
@@ -258,14 +263,12 @@ export function Controls({
             🎲 ランダム
           </button>
         </div>
-        <button
-          className="theme-toggle"
-          onClick={onToggleTheme}
-          title={theme === "dark" ? "ライトテーマに切替" : "ダークテーマに切替"}
-          aria-label="テーマ切替"
-        >
-          {theme === "dark" ? "☀" : "🌙"}
-        </button>
+        <AppearanceMenu
+          theme={theme}
+          onSetTheme={onSetTheme}
+          accent={accent}
+          onSetAccent={onSetAccent}
+        />
       </div>
 
       <Section

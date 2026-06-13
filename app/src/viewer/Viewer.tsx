@@ -28,7 +28,15 @@ const cssColor = (name: string, fallback: string) => {
   return new THREE.Color(v || fallback);
 };
 
-export function Viewer({ mesh, theme }: { mesh: MeshPayload | null; theme: string }) {
+export function Viewer({
+  mesh,
+  theme,
+  accent,
+}: {
+  mesh: MeshPayload | null;
+  theme: string;
+  accent: string | null;
+}) {
   const mountRef = useRef<HTMLDivElement>(null);
   const stateRef = useRef<SceneState | null>(null);
   const [autoRotate, setAutoRotate] = useState(false);
@@ -158,7 +166,8 @@ export function Viewer({ mesh, theme }: { mesh: MeshPayload | null; theme: strin
     };
   }, []);
 
-  // Recolor the scene background + grid when the theme changes.
+  // Recolor the scene (background, grid) and the knob surface when the theme or
+  // accent color changes. CSS vars are the single source of truth.
   useEffect(() => {
     const s = stateRef.current;
     if (!s) return;
@@ -169,7 +178,13 @@ export function Viewer({ mesh, theme }: { mesh: MeshPayload | null; theme: strin
     const grid = new THREE.GridHelper(60, 12, cssColor("--grid-1", "#3a3f4b"), cssColor("--grid-2", "#2a2e36"));
     s.scene.add(grid);
     s.grid = grid;
-  }, [theme]);
+
+    const knob = cssColor("--accent", "#b46cc4");
+    for (const child of s.model.children) {
+      const mat = (child as THREE.Mesh).material;
+      if (mat instanceof THREE.MeshStandardMaterial) mat.color = knob;
+    }
+  }, [theme, accent]);
 
   // Rebuild the displayed geometry whenever a new mesh arrives.
   useEffect(() => {
@@ -192,7 +207,7 @@ export function Viewer({ mesh, theme }: { mesh: MeshPayload | null; theme: strin
     const surface = new THREE.Mesh(
       geometry,
       new THREE.MeshStandardMaterial({
-        color: 0xb46cc4,
+        color: cssColor("--accent", "#b46cc4"),
         metalness: 0.1,
         roughness: 0.55,
         flatShading: false,
