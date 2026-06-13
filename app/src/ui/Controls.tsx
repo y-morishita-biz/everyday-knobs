@@ -10,6 +10,7 @@ import {
   maxIndicatorDepth,
   maxIndicatorReach,
   maxCornerRadius,
+  maxDomeHeight,
   maxLobeDepth,
   maxShaftHoleDepth,
   maxSkirtHeight,
@@ -74,6 +75,7 @@ const TOP_STYLE_LABELS: Record<TopStyle, string> = {
   flat: "フラット",
   recess: "リセス（一段凹み）",
   dish: "ディッシュ（すり鉢）",
+  dome: "ドーム（凸）",
 };
 
 interface ControlsProps {
@@ -157,6 +159,7 @@ export function Controls({
   const maxSkirt = maxSkirtHeight(params);
   const maxCorner = maxCornerRadius(params);
   const maxLobe = maxLobeDepth(params);
+  const maxDome = maxDomeHeight(params);
 
   return (
     <aside className="panel">
@@ -336,24 +339,32 @@ export function Controls({
         {params.topStyle !== "flat" && (
           <>
             <Slider
-              label={params.topStyle === "recess" ? "凹み深さ" : "すり鉢深さ"}
+              label={
+                params.topStyle === "recess"
+                  ? "凹み深さ"
+                  : params.topStyle === "dish"
+                    ? "すり鉢深さ"
+                    : "ドーム高さ"
+              }
               value={params.topRecessDepth}
               min={0.4}
-              max={Math.max(0.4, maxRecess)}
+              max={Math.max(0.4, params.topStyle === "dome" ? maxDome : maxRecess)}
               step={0.1}
               onChange={(v) => set({ topRecessDepth: v })}
             />
-            <Slider
-              label="縁の幅"
-              value={params.topRimWidth}
-              min={0.5}
-              max={maxRim}
-              step={0.1}
-              onChange={(v) => set({ topRimWidth: v })}
-            />
+            {params.topStyle !== "dome" && (
+              <Slider
+                label="縁の幅"
+                value={params.topRimWidth}
+                min={0.5}
+                max={maxRim}
+                step={0.1}
+                onChange={(v) => set({ topRimWidth: v })}
+              />
+            )}
           </>
         )}
-        {maxRecess < 0.4 && params.topStyle !== "flat" && (
+        {maxRecess < 0.4 && (params.topStyle === "recess" || params.topStyle === "dish") && (
           <p className="hint">軸穴を浅くすると凹みを深くできます</p>
         )}
       </section>
