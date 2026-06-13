@@ -59,11 +59,15 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
     const resize = () => {
       const w = mount.clientWidth;
       const h = mount.clientHeight;
+      if (w === 0 || h === 0) return;
       renderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     };
-    window.addEventListener("resize", resize);
+    // Track the container itself (not the window) so layout changes —
+    // mobile orientation, panel resizes — are picked up too.
+    const observer = new ResizeObserver(resize);
+    observer.observe(mount);
 
     const state: SceneState = {
       renderer,
@@ -85,7 +89,7 @@ export function Viewer({ mesh }: { mesh: MeshPayload | null }) {
 
     return () => {
       cancelAnimationFrame(state.frame);
-      window.removeEventListener("resize", resize);
+      observer.disconnect();
       controls.dispose();
       renderer.dispose();
       mount.removeChild(renderer.domElement);
