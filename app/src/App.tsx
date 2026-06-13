@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { cad } from "./cad/cadClient";
-import { DEFAULT_PARAMS } from "./cad/params";
+import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
 import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
 import { PRESETS, type KnobPreset } from "./cad/presets";
+import { loadMyPresets, saveMyPresets } from "./cad/myPresets";
 import { randomParams } from "./cad/random";
 import { useKnobMesh } from "./cad/useKnobMesh";
 import { useUndoableParams } from "./cad/useUndoableParams";
@@ -10,12 +11,24 @@ import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
 import { Viewer } from "./viewer/Viewer";
 
+/** Decode params from the URL hash (#c=…), if a valid code is present. */
+function paramsFromHash(): KnobParams | null {
+  const m = window.location.hash.match(/[#&]c=([^&]+)/);
+  if (!m) return null;
+  try {
+    return parseConfig(decodeURIComponent(m[1]));
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const { params, setParams, replaceParams, undo, redo, canUndo, canRedo } =
-    useUndoableParams(DEFAULT_PARAMS);
+    useUndoableParams(paramsFromHash() ?? DEFAULT_PARAMS);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [myPresets, setMyPresets] = useState<KnobPreset[]>(loadMyPresets);
 
   // Preview mesh is driven by a coalescing, two-phase scheduler (see the hook).
   const { mesh, busy, phase, buildError } = useKnobMesh(params);
@@ -55,10 +68,51 @@ export default function App() {
     flash("ランダム生成しました");
   };
 
-  // Highlight a preset only while the params still match it exactly.
+  // Highlight a preset (built-in or saved) while the params still match it exactly.
   const paramsKey = JSON.stringify(params);
   const activePresetId =
-    PRESETS.find((p) => JSON.stringify(p.params) === paramsKey)?.id ?? null;
+    [...PRESETS, ...myPresets].find((p) => JSON.stringify(p.params) === paramsKey)?.id ??
+    null;
+
+  // Keep the URL hash in sync so the address bar is always shareable / reloadable.
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      const code = encodeOrderCode(params);
+      window.history.replaceState(null, "", `${window.location.pathname}#c=${code}`);
+    }, 300);
+    return () => window.clearTimeout(id);
+  }, [params]);
+
+  const handleCopyLink = async () => {
+    const url = `${window.location.origin}${window.location.pathname}#c=${encodeOrderCode(params)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      flash("共有リンクをコピーしました");
+    } catch {
+      window.prompt("共有リンクをコピーしてください", url);
+    }
+  };
+
+  const handleSavePreset = () => {
+    const name = window.prompt("マイプリセット名")?.trim();
+    if (!name) return;
+    const preset: KnobPreset = {
+      id: `my-${Date.now()}`,
+      name,
+      note: "マイプリセット",
+      params,
+    };
+    const next = [...myPresets, preset];
+    setMyPresets(next);
+    saveMyPresets(next);
+    flash(`「${name}」を保存しました`);
+  };
+
+  const handleDeletePreset = (id: string) => {
+    const next = myPresets.filter((p) => p.id !== id);
+    setMyPresets(next);
+    saveMyPresets(next);
+  };
 
   const handleExportFitTest = async () => {
     try {
@@ -147,6 +201,10 @@ export default function App() {
         canUndo={canUndo}
         canRedo={canRedo}
         onRandom={handleRandom}
+        onCopyLink={handleCopyLink}
+        myPresets={myPresets}
+        onSavePreset={handleSavePreset}
+        onDeletePreset={handleDeletePreset}
         error={error}
         notice={notice}
       />

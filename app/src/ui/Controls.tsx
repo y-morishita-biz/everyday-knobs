@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { PresetGallery } from "./PresetGallery";
+import { PresetGallery, MyPresetGallery } from "./PresetGallery";
 import { PRESETS, type KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
@@ -96,6 +96,10 @@ interface ControlsProps {
   canUndo: boolean;
   canRedo: boolean;
   onRandom: () => void;
+  onCopyLink: () => void;
+  myPresets: KnobPreset[];
+  onSavePreset: () => void;
+  onDeletePreset: (id: string) => void;
   error: string | null;
   notice: string | null;
 }
@@ -183,6 +187,10 @@ export function Controls({
   canUndo,
   canRedo,
   onRandom,
+  onCopyLink,
+  myPresets,
+  onSavePreset,
+  onDeletePreset,
   error,
   notice,
 }: ControlsProps) {
@@ -250,10 +258,23 @@ export function Controls({
         {...sec("gallery")}
         title="ギャラリー"
         summary={
-          PRESETS.find((p) => p.id === activePresetId)?.name ?? `${PRESETS.length}作例`
+          [...PRESETS, ...myPresets].find((p) => p.id === activePresetId)?.name ??
+          `${PRESETS.length}作例`
         }
       >
         <PresetGallery onPick={onPreset} activeId={activePresetId} />
+        <div className="mypreset-head">
+          <h3 className="subgroup__title">マイプリセット</h3>
+          <button className="mypreset-save" onClick={onSavePreset}>
+            ＋ 現在の設定を保存
+          </button>
+        </div>
+        <MyPresetGallery
+          presets={myPresets}
+          onPick={onPreset}
+          onDelete={onDeletePreset}
+          activeId={activePresetId}
+        />
       </Section>
 
       <Section
@@ -740,6 +761,14 @@ export function Controls({
             STEP
           </button>
         </div>
+        <h3 className="subgroup__title">共有リンク</h3>
+        <button className="order-btn" onClick={onCopyLink}>
+          🔗 共有リンクをコピー
+        </button>
+        <p className="hint">
+          現在の設定をURLに埋め込んでコピー。開くだけで同じノブが再現されます（URLは常に最新に同期）。
+        </p>
+
         <h3 className="subgroup__title">設定の保存・読込</h3>
         <div className="export">
           <button onClick={onSaveJson}>JSON保存</button>
