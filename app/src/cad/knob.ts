@@ -11,6 +11,7 @@ import {
   SHAFTS,
   flatTopRadius,
   maxCornerRadius,
+  maxDomeHeight,
   maxFluteDepth,
   maxIndicatorDepth,
   maxIndicatorReach,
@@ -197,13 +198,42 @@ function applyTopEdge(body: Solid, params: KnobParams): Solid {
     : (body.fillet(size, topEdge) as Solid);
 }
 
-/** Carve a cylindrical recess or a spherical dish into the top face. */
+/**
+ * Height of the top surface at radius `r`. Flat/recess/dish stay at the body
+ * height; a dome bulges up to its apex at the centre. Used so the indicator and
+ * ticks engrave the actual (possibly curved) top surface.
+ */
+function topSurfaceZ(params: KnobParams, r: number): number {
+  const top = params.bodyHeight;
+  if (params.topStyle !== "dome") return top;
+  const hh = Math.min(params.topRecessDepth, maxDomeHeight(params));
+  if (hh <= 0.05) return top;
+  const capR = flatTopRadius(params);
+  const rho = (capR * capR + hh * hh) / (2 * hh);
+  const cz = top + hh - rho;
+  const rr = Math.min(Math.abs(r), capR);
+  return cz + Math.sqrt(Math.max(0, rho * rho - rr * rr));
+}
+
+/** Carve a recess/dish into, or fuse a convex dome onto, the top face. */
 function applyTopStyle(body: Solid, params: KnobParams): Solid {
   if (params.topStyle === "flat") return body;
-  const depth = Math.min(params.topRecessDepth, maxTopRecessDepth(params));
-  if (depth <= 0) return body;
   const flatR = flatTopRadius(params);
   const h = params.bodyHeight;
+
+  if (params.topStyle === "dome") {
+    const domeH = Math.min(params.topRecessDepth, maxDomeHeight(params));
+    if (domeH <= 0.05) return body;
+    const rho = (flatR * flatR + domeH * domeH) / (2 * domeH);
+    const sphere = makeSphere(rho).translate([0, 0, h + domeH - rho]);
+    const cap = sphere.intersect(
+      makeCylinder(flatR, domeH + 2).translate([0, 0, h]),
+    ) as Solid;
+    return body.fuse(cap) as Solid;
+  }
+
+  const depth = Math.min(params.topRecessDepth, maxTopRecessDepth(params));
+  if (depth <= 0) return body;
   const rim = Math.min(params.topRimWidth, maxTopRimWidth(params));
 
   if (params.topStyle === "recess") {
@@ -228,24 +258,30 @@ function applyIndicator(body: Solid, params: KnobParams): Solid {
   const reach = Math.min(params.indicatorReach, maxIndicatorReach(params));
   if (depth <= 0) return body;
 
+  const dome = params.topStyle === "dome";
+  const apexZ = topSurfaceZ(params, 0);
+
   if (params.indicator === "line") {
     // Overshoot the rim only when the line is meant to reach it.
     const len = reach >= flatR - 0.3 ? flatR + 1 : reach;
-    const hz = depth + 0.2;
+    // On a dome, cut a slot from the apex down so the whole radial line shows.
+    const zTop = dome ? apexZ : top;
+    const hz = dome ? apexZ - top + depth + 0.3 : depth + 0.2;
     const cutter = makeBaseBox(len, params.indicatorSize, hz)
-      .translate([len / 2, 0, top + 0.1 - hz / 2])
+      .translate([len / 2, 0, zTop + 0.1 - hz / 2])
       .rotate(params.indicatorAngle, [0, 0, 0], [0, 0, 1]);
     return body.cut(cutter) as Solid;
   }
 
-  // dimple: an offset cylindrical pocket at the requested distance.
+  // dimple: an offset cylindrical pocket on the (possibly domed) top surface.
   const r = params.indicatorSize / 2;
   const offset = Math.max(0, reach);
   const a = (params.indicatorAngle * Math.PI) / 180;
+  const surfZ = topSurfaceZ(params, offset);
   const dimple = makeCylinder(r, depth + 0.1, [
     Math.cos(a) * offset,
     Math.sin(a) * offset,
-    top - depth,
+    surfZ - depth,
   ]);
   return body.cut(dimple) as Solid;
 }
@@ -263,12 +299,13 @@ function applyTicks(body: Solid, params: KnobParams): Solid {
   const n = Math.round(params.tickCount);
   if (n < 2) return body;
 
-  const top = params.bodyHeight;
   const depth = Math.min(0.4, maxIndicatorDepth(params));
   if (depth <= 0) return body;
   const hz = depth + 0.2;
 
   const outerR = flatR - 0.3;
+  // Engrave from the actual top surface at the ring radius (matters for a dome).
+  const top = topSurfaceZ(params, outerR);
   const minorLen = Math.max(0.8, Math.min(2.5, flatR * 0.2));
   const minorW = 0.6;
   const major = params.tickMajorEvery;

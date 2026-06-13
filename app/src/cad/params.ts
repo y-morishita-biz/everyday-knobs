@@ -112,8 +112,8 @@ export interface KnobParams {
 /** Day 2: top rim edge treatment — none, 45° chamfer, or rounded fillet. */
 export type TopEdgeStyle = "none" | "chamfer" | "fillet";
 
-/** Day 4: top face treatment — flat, cylindrical recess, or spherical dish. */
-export type TopStyle = "flat" | "recess" | "dish";
+/** Day 4/20: top face — flat, recess (pocket), dish (concave), or dome (convex crown). */
+export type TopStyle = "flat" | "recess" | "dish" | "dome";
 
 /** Day 5: top-face indicator — none, an engraved radial line, or an offset dimple. */
 export type IndicatorType = "none" | "line" | "dimple";
@@ -268,6 +268,11 @@ export function maxTopRimWidth(params: KnobParams): number {
   return Math.max(0.5, Math.floor((flatTopRadius(params) - 2) * 10) / 10);
 }
 
+/** Tallest convex dome (additive crown) for the current top radius (mm). */
+export function maxDomeHeight(params: KnobParams): number {
+  return Math.max(0.4, Math.min(8, Math.floor(flatTopRadius(params) * 0.9 * 10) / 10));
+}
+
 /** Deepest indicator engraving that stays above the shaft socket (mm). */
 export function maxIndicatorDepth(params: KnobParams): number {
   const wall =
@@ -353,7 +358,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     shaftHoleDepth: cl(num(input.shaftHoleDepth, d.shaftHoleDepth), 2, 40),
     topEdgeStyle: pick(input.topEdgeStyle, ["none", "chamfer", "fillet"], d.topEdgeStyle),
     topEdgeSize: Math.max(0.2, num(input.topEdgeSize, d.topEdgeSize)),
-    topStyle: pick(input.topStyle, ["flat", "recess", "dish"], d.topStyle),
+    topStyle: pick(input.topStyle, ["flat", "recess", "dish", "dome"], d.topStyle),
     topRecessDepth: Math.max(0.4, num(input.topRecessDepth, d.topRecessDepth)),
     topRimWidth: Math.max(0.5, num(input.topRimWidth, d.topRimWidth)),
     indicator: pick(input.indicator, ["none", "line", "dimple"], d.indicator),
@@ -386,7 +391,10 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   p.topDiameter = Math.max(minDia, p.topDiameter);
   p.shaftHoleDepth = Math.min(p.shaftHoleDepth, maxShaftHoleDepth(p));
   p.topEdgeSize = Math.min(p.topEdgeSize, maxTopEdgeSize(p));
-  p.topRecessDepth = Math.min(p.topRecessDepth, maxTopRecessDepth(p));
+  p.topRecessDepth = Math.min(
+    p.topRecessDepth,
+    p.topStyle === "dome" ? maxDomeHeight(p) : maxTopRecessDepth(p),
+  );
   p.topRimWidth = Math.min(p.topRimWidth, maxTopRimWidth(p));
   p.indicatorDepth = Math.min(p.indicatorDepth, maxIndicatorDepth(p));
   p.indicatorReach = Math.min(p.indicatorReach, maxIndicatorReach(p));
