@@ -104,6 +104,81 @@ body {
   color: var(--muted);
 }
 
+/* Collapsible category sections (Day 21) */
+.acc {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: color-mix(in srgb, var(--panel-2) 55%, transparent);
+  overflow: hidden;
+}
+
+.acc__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  background: none;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.acc__head:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.acc__title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.acc__summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.acc__chevron {
+  margin-left: auto;
+  color: var(--muted);
+  transition: transform 0.15s;
+}
+
+.acc__summary + .acc__chevron {
+  margin-left: 0;
+}
+
+.acc.is-open > .acc__head .acc__chevron {
+  transform: rotate(180deg);
+}
+
+.acc__body {
+  padding: 2px 12px 14px;
+}
+
+.subgroup__title {
+  margin: 14px 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-transform: none;
+}
+
+.acc__body > .subgroup__title:first-child {
+  margin-top: 6px;
+}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

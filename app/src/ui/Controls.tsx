@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { PresetGallery } from "./PresetGallery";
-import type { KnobPreset } from "../cad/presets";
+import { PRESETS, type KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
   bulgeRange,
@@ -125,6 +125,41 @@ function Slider(props: {
   );
 }
 
+/** Collapsible category. Collapsed headers show a one-line summary of current values. */
+function Section(props: {
+  id: string;
+  title: string;
+  summary?: string;
+  open: boolean;
+  onToggle: (id: string) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className={`acc${props.open ? " is-open" : ""}`}>
+      <button
+        type="button"
+        className="acc__head"
+        aria-expanded={props.open}
+        onClick={() => props.onToggle(props.id)}
+      >
+        <span className="acc__title">{props.title}</span>
+        {!props.open && props.summary && (
+          <span className="acc__summary">{props.summary}</span>
+        )}
+        <span className="acc__chevron" aria-hidden="true">
+          ▾
+        </span>
+      </button>
+      {props.open && <div className="acc__body">{props.children}</div>}
+    </section>
+  );
+}
+
+/** Short form of a toggle label: drop the parenthesised qualifier. */
+const short = (label: string) => label.split("（")[0];
+
+const OPEN_SECTIONS_KEY = "everyday-knobs.openSections";
+
 export function Controls({
   params,
   onChange,
@@ -143,6 +178,29 @@ export function Controls({
 }: ControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [codeText, setCodeText] = useState("");
+
+  // Which accordion categories are open (persisted across sessions).
+  const [openIds, setOpenIds] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(OPEN_SECTIONS_KEY);
+      if (raw) return JSON.parse(raw) as string[];
+    } catch {
+      /* private mode etc. — fall through to default */
+    }
+    return ["gallery", "shape"];
+  });
+  const toggleSection = (id: string) => {
+    setOpenIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      try {
+        localStorage.setItem(OPEN_SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
+  };
+  const sec = (id: string) => ({ id, open: openIds.includes(id), onToggle: toggleSection });
 
   // All edits funnel through clampParams so values can never go degenerate.
   const set = (patch: Partial<KnobParams>) => onChange(clampParams({ ...params, ...patch }));
@@ -166,13 +224,24 @@ export function Controls({
       <h1 className="panel__title">everyday knobs</h1>
       <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
 
-      <section className="group">
-        <h2 className="group__title">ギャラリー（作例プリセット）</h2>
+      <Section
+        {...sec("gallery")}
+        title="ギャラリー"
+        summary={
+          PRESETS.find((p) => p.id === activePresetId)?.name ?? `${PRESETS.length}作例`
+        }
+      >
         <PresetGallery onPick={onPreset} activeId={activePresetId} />
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">対象エンコーダ（軸タイプ）</h2>
+      <Section
+        {...sec("shaft")}
+        title="軸・取り付け"
+        summary={`${params.shaft}・φ${(
+          SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance
+        ).toFixed(2)}`}
+      >
+        <h3 className="subgroup__title">対象エンコーダ（軸タイプ）</h3>
         <div className="toggle">
           {(Object.keys(SHAFTS) as ShaftType[]).map((id) => (
             <button
@@ -184,10 +253,37 @@ export function Controls({
             </button>
           ))}
         </div>
-      </section>
+        <h3 className="subgroup__title">軸穴</h3>
+        <Slider
+          label="軸穴 深さ"
+          value={params.shaftHoleDepth}
+          min={2}
+          max={maxDepth}
+          step={1}
+          onChange={(v) => set({ shaftHoleDepth: v })}
+        />
+        <Slider
+          label="嵌合クリアランス"
+          value={params.shaftClearance}
+          min={-0.1}
+          max={0.6}
+          step={0.05}
+          onChange={(v) => set({ shaftClearance: v })}
+        />
+        <p className="hint">
+          軸穴 実寸 φ{(SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance).toFixed(2)}
+          {SHAFTS[params.shaft].flatDistance !== undefined &&
+            ` ／ Dカット面 ${(SHAFTS[params.shaft].flatDistance! + params.shaftClearance).toFixed(2)}mm`}
+          （マイナス=きつめ圧入）。入口には0.5mmの挿入面取りが自動で付きます
+        </p>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">本体形状</h2>
+      <Section
+        {...sec("shape")}
+        title="本体形状・サイズ"
+        summary={`${short(BODY_SHAPE_LABELS[params.bodyShape])} φ${params.bodyDiameter}×H${params.bodyHeight}`}
+      >
+        <h3 className="subgroup__title">本体形状</h3>
         <div className="toggle">
           {(Object.keys(BODY_SHAPE_LABELS) as BodyShape[]).map((s) => (
             <button
@@ -255,10 +351,7 @@ export function Controls({
             <p className="hint">本体が指針になる涙滴型。向きは「指標 → 位置（角度）」で調整</p>
           </>
         )}
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">本体</h2>
+        <h3 className="subgroup__title">サイズ</h3>
         <Slider
           label="本体径（下部）"
           value={params.bodyDiameter}
@@ -296,10 +389,14 @@ export function Controls({
             <p className="hint">＋で樽型、−でくびれ（鼓）。0で直胴/テーパー</p>
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">天面エッジ</h2>
+      <Section
+        {...sec("top")}
+        title="天面"
+        summary={`${short(TOP_EDGE_LABELS[params.topEdgeStyle])}・${short(TOP_STYLE_LABELS[params.topStyle])}`}
+      >
+        <h3 className="subgroup__title">天面エッジ</h3>
         <div className="toggle">
           {(Object.keys(TOP_EDGE_LABELS) as TopEdgeStyle[]).map((style) => (
             <button
@@ -321,10 +418,7 @@ export function Controls({
             onChange={(v) => set({ topEdgeSize: v })}
           />
         )}
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">天面スタイル</h2>
+        <h3 className="subgroup__title">天面スタイル</h3>
         <div className="toggle">
           {(Object.keys(TOP_STYLE_LABELS) as TopStyle[]).map((style) => (
             <button
@@ -367,10 +461,14 @@ export function Controls({
         {maxRecess < 0.4 && (params.topStyle === "recess" || params.topStyle === "dish") && (
           <p className="hint">軸穴を浅くすると凹みを深くできます</p>
         )}
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">側面テクスチャ</h2>
+      <Section
+        {...sec("side")}
+        title="側面"
+        summary={`${short(TEXTURE_LABELS[params.surfaceTexture])}${params.skirt === "flange" ? "・フランジ" : ""}`}
+      >
+        <h3 className="subgroup__title">側面テクスチャ</h3>
         <div className="toggle">
           {(Object.keys(TEXTURE_LABELS) as SurfaceTexture[]).map((tex) => (
             <button
@@ -440,10 +538,7 @@ export function Controls({
             ※ 操作中は滑面プレビュー → 手を止めると数秒でテクスチャを仕上げます
           </p>
         )}
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">スカート（裾）</h2>
+        <h3 className="subgroup__title">スカート（裾）</h3>
         <div className="toggle">
           {(Object.keys(SKIRT_LABELS) as SkirtStyle[]).map((s) => (
             <button
@@ -475,10 +570,14 @@ export function Controls({
             />
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">指標（天面）</h2>
+      <Section
+        {...sec("marks")}
+        title="指標・目盛り"
+        summary={`${short(INDICATOR_LABELS[params.indicator])}${params.tickRing === "ticks" ? `・目盛り${params.tickCount}本` : ""}`}
+      >
+        <h3 className="subgroup__title">指標（天面）</h3>
         <div className="toggle">
           {(Object.keys(INDICATOR_LABELS) as IndicatorType[]).map((type) => (
             <button
@@ -527,10 +626,7 @@ export function Controls({
             />
           </>
         )}
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">目盛り（ティック）</h2>
+        <h3 className="subgroup__title">目盛り（ティック）</h3>
         <div className="toggle">
           {(["none", "ticks"] as TickRing[]).map((t) => (
             <button
@@ -577,36 +673,17 @@ export function Controls({
             </p>
           </>
         )}
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">軸穴</h2>
-        <Slider
-          label="軸穴 深さ"
-          value={params.shaftHoleDepth}
-          min={2}
-          max={maxDepth}
-          step={1}
-          onChange={(v) => set({ shaftHoleDepth: v })}
-        />
-        <Slider
-          label="嵌合クリアランス"
-          value={params.shaftClearance}
-          min={-0.1}
-          max={0.6}
-          step={0.05}
-          onChange={(v) => set({ shaftClearance: v })}
-        />
-        <p className="hint">
-          軸穴 実寸 φ{(SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance).toFixed(2)}
-          {SHAFTS[params.shaft].flatDistance !== undefined &&
-            ` ／ Dカット面 ${(SHAFTS[params.shaft].flatDistance! + params.shaftClearance).toFixed(2)}mm`}
-          （マイナス=きつめ圧入）。入口には0.5mmの挿入面取りが自動で付きます
-        </p>
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">印刷サポート</h2>
+      <Section
+        {...sec("print")}
+        title="印刷サポート"
+        summary={
+          params.bottomChamfer > 0.05
+            ? `底面取り ${params.bottomChamfer.toFixed(1)}mm`
+            : "標準"
+        }
+      >
         <Slider
           label="底面の面取り"
           value={params.bottomChamfer}
@@ -629,10 +706,10 @@ export function Controls({
           現在の公差を中心に 0.05mm 刻みで5段（−0.05〜+0.15）のソケットを並べた試し刷り用。
           天面の刻み目 1〜5 が順番（2 = 現在値）。一度のプリントでベストフィットを特定できます
         </p>
-      </section>
+      </Section>
 
-      <section className="group">
-        <h2 className="group__title">3Dデータ書き出し</h2>
+      <Section {...sec("export")} title="書き出し・共有" summary="STL / STEP / JSON / 注文コード">
+        <h3 className="subgroup__title">3Dデータ書き出し</h3>
         <div className="export">
           <button disabled={busy} onClick={() => onExport("stl")}>
             STL
@@ -641,10 +718,7 @@ export function Controls({
             STEP
           </button>
         </div>
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">設定の保存・読込</h2>
+        <h3 className="subgroup__title">設定の保存・読込</h3>
         <div className="export">
           <button onClick={onSaveJson}>JSON保存</button>
           <button onClick={() => fileInputRef.current?.click()}>JSON読込</button>
@@ -660,10 +734,7 @@ export function Controls({
             e.target.value = "";
           }}
         />
-      </section>
-
-      <section className="group">
-        <h2 className="group__title">カスタムオーダー</h2>
+        <h3 className="subgroup__title">カスタムオーダー</h3>
         <p className="hint">
           このノブをメーカーに作ってもらう注文コード。コピーして送ると同じ設定で再現・プリントできます。
         </p>
@@ -688,7 +759,7 @@ export function Controls({
             読込
           </button>
         </div>
-      </section>
+      </Section>
 
       <div className={`status${busy ? " is-busy" : ""}`}>
         {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
