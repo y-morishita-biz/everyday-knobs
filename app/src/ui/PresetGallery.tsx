@@ -151,3 +151,43 @@ export function PresetGallery({ onPick, activeId }: PresetGalleryProps) {
     </div>
   );
 }
+
+/** Saved (user) presets — same cards plus a delete affordance. */
+export function MyPresetGallery({
+  presets,
+  onPick,
+  onDelete,
+  activeId,
+}: {
+  presets: KnobPreset[];
+  onPick: (preset: KnobPreset) => void;
+  onDelete: (id: string) => void;
+  activeId: string | null;
+}) {
+  if (presets.length === 0) {
+    return <p className="hint">「現在の設定を保存」で、自分の作例をここに貯められます。</p>;
+  }
+  return (
+    <div className="gallery">
+      {presets.map((preset) => (
+        <div
+          key={preset.id}
+          className={`preset preset--mine${activeId === preset.id ? " is-active" : ""}`}
+        >
+          <button className="preset__pick" onClick={() => onPick(preset)} title={preset.name}>
+            <PresetGlyph p={preset.params} />
+            <span className="preset__name">{preset.name}</span>
+          </button>
+          <button
+            className="preset__del"
+            title="削除"
+            aria-label={`${preset.name} を削除`}
+            onClick={() => onDelete(preset.id)}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
