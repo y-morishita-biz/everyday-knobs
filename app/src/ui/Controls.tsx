@@ -45,6 +45,17 @@ const TEXTURE_LABELS: Record<SurfaceTexture, string> = {
   flutes: "縦溝（ローレット）",
   helical: "斜め（ヘリカル）",
   diamond: "綾目（ダイヤ）",
+  rings: "横溝（リング）",
+  scallops: "指スクープ",
+};
+
+const TEXTURE_COUNT_LABEL: Record<SurfaceTexture, string> = {
+  none: "本数",
+  flutes: "本数",
+  helical: "本数",
+  diamond: "本数（各方向）",
+  rings: "段数",
+  scallops: "スクープ数",
 };
 
 const INDICATOR_LABELS: Record<IndicatorType, string> = {
@@ -363,32 +374,42 @@ export function Controls({
         {params.surfaceTexture !== "none" && (
           <>
             <Slider
-              label={params.surfaceTexture === "diamond" ? "本数（各方向）" : "本数"}
+              label={TEXTURE_COUNT_LABEL[params.surfaceTexture]}
               value={params.fluteCount}
-              min={8}
+              min={params.surfaceTexture === "scallops" ? 3 : 6}
               max={48}
               step={1}
-              unit="本"
+              unit={
+                params.surfaceTexture === "rings"
+                  ? "段"
+                  : params.surfaceTexture === "scallops"
+                    ? "個"
+                    : "本"
+              }
               onChange={(v) => set({ fluteCount: v })}
             />
             <Slider
-              label="溝の深さ"
+              label={params.surfaceTexture === "scallops" ? "スクープ深さ" : "溝の深さ"}
               value={params.fluteDepth}
               min={0.2}
               max={Math.max(0.2, maxFlute)}
               step={0.1}
               onChange={(v) => set({ fluteDepth: v })}
             />
-            <Slider
-              label="溝の太さ"
-              value={params.fluteWidthPercent}
-              min={40}
-              max={120}
-              step={5}
-              unit="%"
-              onChange={(v) => set({ fluteWidthPercent: v })}
-            />
-            {params.surfaceTexture !== "flutes" && (
+            {(params.surfaceTexture === "flutes" ||
+              params.surfaceTexture === "helical" ||
+              params.surfaceTexture === "diamond") && (
+              <Slider
+                label="溝の太さ"
+                value={params.fluteWidthPercent}
+                min={40}
+                max={120}
+                step={5}
+                unit="%"
+                onChange={(v) => set({ fluteWidthPercent: v })}
+              />
+            )}
+            {(params.surfaceTexture === "helical" || params.surfaceTexture === "diamond") && (
               <Slider
                 label="ねじれ角"
                 value={params.knurlAngle}
@@ -401,7 +422,9 @@ export function Controls({
             )}
           </>
         )}
-        {(params.surfaceTexture === "helical" || params.surfaceTexture === "diamond") && (
+        {(params.surfaceTexture === "helical" ||
+          params.surfaceTexture === "diamond" ||
+          params.surfaceTexture === "rings") && (
           <p className="hint">
             ※ 操作中は滑面プレビュー → 手を止めると数秒でテクスチャを仕上げます
           </p>

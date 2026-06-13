@@ -57,13 +57,27 @@ function PresetGlyph({ p }: { p: KnobParams }) {
   }
 
   const ticks: JSX.Element[] = [];
-  if (p.surfaceTexture !== "none") {
+  const knurled =
+    p.surfaceTexture === "flutes" ||
+    p.surfaceTexture === "helical" ||
+    p.surfaceTexture === "diamond";
+  if (knurled) {
     const n = Math.min(p.fluteCount, 28);
     for (let i = 0; i < n; i++) {
       const a = (i / n) * 2 * Math.PI;
       const [x1, y1] = at(a, R - 3.5);
       const [x2, y2] = at(a, R);
       ticks.push(<line key={i} x1={x1} y1={y1} x2={x2} y2={y2} className="glyph__tick" />);
+    }
+  } else if (p.surfaceTexture === "rings") {
+    ticks.push(<circle key="r1" cx={C} cy={C} r={R - 3} className="glyph__ringline" />);
+    ticks.push(<circle key="r2" cx={C} cy={C} r={R - 6} className="glyph__ringline" />);
+  } else if (p.surfaceTexture === "scallops") {
+    const n = Math.min(Math.max(p.fluteCount, 3), 10);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 2 * Math.PI;
+      const [x, y] = at(a, R - 1.5);
+      ticks.push(<circle key={`s${i}`} cx={x} cy={y} r={2.2} className="glyph__scoop" />);
     }
   }
 

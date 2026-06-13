@@ -293,6 +293,82 @@ function applyTicks(body: Solid, params: KnobParams): Solid {
   return cutters ? (body.cut(cutters) as Solid) : body;
 }
 
+/** Outer surface radius of the body at height z (follows taper/bulge/lobe peak). */
+function surfaceRadiusAt(params: KnobParams, z: number): number {
+  const baseR = params.bodyDiameter / 2;
+  const topR = params.topDiameter / 2;
+  const H = params.bodyHeight;
+  let r = baseR + (topR - baseR) * (z / H);
+  if (params.bodyShape === "round" && Math.abs(params.bodyBulge) > 0.05) {
+    r += params.bodyBulge * (1 - Math.pow((z - H / 2) / (H / 2), 2));
+  } else if (params.bodyShape === "lobed") {
+    r += params.lobeDepth; // peak radius
+  }
+  return r;
+}
+
+/** Shared side-texture band: smooth rings above the skirt and below the top edge. */
+function textureBand(params: KnobParams): { zStart: number; bandHeight: number; depth: number } | null {
+  const depth = Math.min(params.fluteDepth, maxFluteDepth(params));
+  if (depth <= 0) return null;
+  const edge =
+    params.topEdgeStyle === "none"
+      ? 0
+      : Math.min(params.topEdgeSize, maxTopEdgeSize(params));
+  const skirtTop =
+    params.skirt === "flange" ? Math.min(params.skirtHeight, maxSkirtHeight(params)) : 0;
+  const zStart = Math.max(0.8, skirtTop + 0.4);
+  const bandHeight = params.bodyHeight - (edge + 0.8) - zStart;
+  if (bandHeight <= 1) return null;
+  return { zStart, bandHeight, depth };
+}
+
+/** Horizontal ring grooves: a stack of revolved tori carved around the side. */
+function applyRings(body: Solid, params: KnobParams): Solid {
+  const band = textureBand(params);
+  if (!band) return body;
+  const n = Math.round(params.fluteCount);
+  if (n < 1) return body;
+  const mr = Math.min(band.depth, (band.bandHeight / (2 * n)) * 0.85);
+  if (mr < 0.15) return body;
+
+  // Stack all ring cross-sections into one XZ profile, revolve once, cut once —
+  // far cheaper than fusing or sequentially cutting N separate tori.
+  let profile: Drawing | null = null;
+  for (let i = 0; i < n; i++) {
+    const z = band.zStart + ((i + 0.5) / n) * band.bandHeight;
+    const circ = drawCircle(mr).translate(surfaceRadiusAt(params, z), z);
+    profile = profile ? (profile.fuse(circ) as Drawing) : circ;
+  }
+  if (!profile) return body;
+  const tool = profile.sketchOnPlane("XZ").revolve([0, 0, 1]) as Solid;
+  return body.cut(tool) as Solid;
+}
+
+/** Finger scallops: a few large vertical cylindrical scoops around the side. */
+function applyScallops(body: Solid, params: KnobParams): Solid {
+  const band = textureBand(params);
+  if (!band) return body;
+  const n = Math.round(params.fluteCount);
+  if (n < 2) return body;
+  const midZ = band.zStart + band.bandHeight / 2;
+  const refR = surfaceRadiusAt(params, midZ);
+  const scoopR = Math.max(3, ((Math.PI * refR) / n) * 1.1);
+  const dist = refR - band.depth + scoopR;
+
+  let cutters: Solid | null = null;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 2 * Math.PI;
+    const c = makeCylinder(scoopR, band.bandHeight + 0.2, [
+      Math.cos(a) * dist,
+      Math.sin(a) * dist,
+      band.zStart - 0.1,
+    ]) as Solid;
+    cutters = cutters ? (cutters.fuse(c) as Solid) : c;
+  }
+  return cutters ? (body.cut(cutters) as Solid) : body;
+}
+
 /**
  * Carve a knurl into the side wall: vertical flutes, diagonal (helical), or a
  * diamond cross-hatch. Each groove is a round cutter cylinder; helical/diamond
@@ -300,6 +376,8 @@ function applyTicks(body: Solid, params: KnobParams): Solid {
  */
 function applyTexture(body: Solid, params: KnobParams): Solid {
   if (params.surfaceTexture === "none") return body;
+  if (params.surfaceTexture === "rings") return applyRings(body, params);
+  if (params.surfaceTexture === "scallops") return applyScallops(body, params);
   const depth = Math.min(params.fluteDepth, maxFluteDepth(params));
   if (depth <= 0) return body;
   const n = Math.round(params.fluteCount);
