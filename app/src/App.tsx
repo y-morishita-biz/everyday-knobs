@@ -1,15 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { cad } from "./cad/cadClient";
-import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
+import { DEFAULT_PARAMS } from "./cad/params";
 import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
 import { PRESETS, type KnobPreset } from "./cad/presets";
+import { randomParams } from "./cad/random";
 import { useKnobMesh } from "./cad/useKnobMesh";
+import { useUndoableParams } from "./cad/useUndoableParams";
 import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
 import { Viewer } from "./viewer/Viewer";
 
 export default function App() {
-  const [params, setParams] = useState<KnobParams>(DEFAULT_PARAMS);
+  const { params, setParams, replaceParams, undo, redo, canUndo, canRedo } =
+    useUndoableParams(DEFAULT_PARAMS);
   const [actionError, setActionError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
@@ -43,8 +46,13 @@ export default function App() {
   };
 
   const applyPreset = (preset: KnobPreset) => {
-    setParams(preset.params);
+    replaceParams(preset.params);
     flash(`「${preset.name}」を読み込みました`);
+  };
+
+  const handleRandom = () => {
+    replaceParams(randomParams());
+    flash("ランダム生成しました");
   };
 
   // Highlight a preset only while the params still match it exactly.
@@ -73,12 +81,32 @@ export default function App() {
 
   const applyText = (text: string) => {
     try {
-      setParams(parseConfig(text));
+      replaceParams(parseConfig(text));
       flash("設定を読み込みました");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "読み込みに失敗しました");
     }
   };
+
+  // Keyboard: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z or Ctrl+Y = redo.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
 
   const handleLoadFile = async (file: File) => {
     try {
@@ -114,6 +142,11 @@ export default function App() {
         onApplyText={applyText}
         onPreset={applyPreset}
         activePresetId={activePresetId}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
+        onRandom={handleRandom}
         error={error}
         notice={notice}
       />

@@ -91,6 +91,11 @@ interface ControlsProps {
   onApplyText: (text: string) => void;
   onPreset: (preset: KnobPreset) => void;
   activePresetId: string | null;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+  onRandom: () => void;
   error: string | null;
   notice: string | null;
 }
@@ -173,6 +178,11 @@ export function Controls({
   onApplyText,
   onPreset,
   activePresetId,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  onRandom,
   error,
   notice,
 }: ControlsProps) {
@@ -223,6 +233,18 @@ export function Controls({
     <aside className="panel">
       <h1 className="panel__title">everyday knobs</h1>
       <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
+
+      <div className="actions">
+        <button onClick={onUndo} disabled={!canUndo} title="元に戻す (Ctrl+Z)">
+          ↶ 戻す
+        </button>
+        <button onClick={onRedo} disabled={!canRedo} title="やり直し (Ctrl+Shift+Z)">
+          ↷ 進む
+        </button>
+        <button className="actions__random" onClick={onRandom} title="ランダムに生成">
+          🎲 ランダム
+        </button>
+      </div>
 
       <Section
         {...sec("gallery")}

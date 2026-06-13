@@ -104,6 +104,40 @@ body {
   color: var(--muted);
 }
 
+/* Undo / redo / random action row (Day 24) */
+.actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.actions button {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.actions button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.actions__random {
+  flex: 1.4 !important;
+  border-color: var(--accent) !important;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel-2)) !important;
+  font-weight: 600;
+}
+
 /* Collapsible category sections (Day 21) */
 .acc {
   border: 1px solid var(--border);
