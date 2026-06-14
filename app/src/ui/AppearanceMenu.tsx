@@ -44,6 +44,7 @@ export function AppearanceMenu({ theme, onSetTheme, accent, onSetAccent }: Props
         className="theme-toggle"
         aria-haspopup="true"
         aria-expanded={open}
+        aria-label="外観設定（テーマ・カラー）"
         title="外観設定（テーマ・カラー）"
         onClick={() => setOpen((o) => !o)}
       >

@@ -118,14 +118,13 @@ function Slider(props: {
   unit?: string;
   onChange: (v: number) => void;
 }) {
+  const unit = props.unit ?? " mm";
+  const display = `${props.value.toFixed(props.step < 1 ? 2 : 0)}${unit}`;
   return (
     <label className="slider">
       <span className="slider__row">
         <span>{props.label}</span>
-        <span className="slider__value">
-          {props.value.toFixed(props.step < 1 ? 2 : 0)}
-          {props.unit ?? " mm"}
-        </span>
+        <span className="slider__value">{display}</span>
       </span>
       <input
         type="range"
@@ -133,6 +132,8 @@ function Slider(props: {
         max={props.max}
         step={props.step}
         value={props.value}
+        aria-label={props.label}
+        aria-valuetext={display}
         onChange={(e) => props.onChange(Number(e.target.value))}
       />
     </label>
@@ -144,16 +145,19 @@ function Section(props: {
   id: string;
   title: string;
   summary?: string;
+  help?: string;
   open: boolean;
   onToggle: (id: string) => void;
   children: React.ReactNode;
 }) {
+  const bodyId = `acc-body-${props.id}`;
   return (
     <section className={`acc${props.open ? " is-open" : ""}`}>
       <button
         type="button"
         className="acc__head"
         aria-expanded={props.open}
+        aria-controls={bodyId}
         onClick={() => props.onToggle(props.id)}
       >
         <span className="acc__title">{props.title}</span>
@@ -164,7 +168,12 @@ function Section(props: {
           ▾
         </span>
       </button>
-      {props.open && <div className="acc__body">{props.children}</div>}
+      {props.open && (
+        <div className="acc__body" id={bodyId}>
+          {props.help && <p className="acc__help">{props.help}</p>}
+          {props.children}
+        </div>
+      )}
     </section>
   );
 }
@@ -247,7 +256,7 @@ export function Controls({
   const maxDome = maxDomeHeight(params);
 
   return (
-    <aside className="panel">
+    <aside className="panel" aria-label="ノブのパラメータ">
       <h1 className="panel__title">everyday knobs</h1>
       <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
 
@@ -274,6 +283,7 @@ export function Controls({
       <Section
         {...sec("gallery")}
         title="ギャラリー"
+        help="作例をタップして出発点に。下のマイプリセットに自分の設定も保存できます。"
         summary={
           [...PRESETS, ...myPresets].find((p) => p.id === activePresetId)?.name ??
           `${PRESETS.length}作例`
@@ -297,6 +307,7 @@ export function Controls({
       <Section
         {...sec("shaft")}
         title="軸・取り付け"
+        help="使うエンコーダの軸タイプと、軸穴の深さ・きつさ（嵌合クリアランス）を決めます。"
         summary={`${params.shaft}・φ${(
           SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance
         ).toFixed(2)}`}
@@ -307,6 +318,7 @@ export function Controls({
             <button
               key={id}
               className={`toggle__btn${params.shaft === id ? " is-active" : ""}`}
+              aria-pressed={params.shaft === id}
               onClick={() => set({ shaft: id })}
             >
               {SHAFTS[id].label}
@@ -341,6 +353,7 @@ export function Controls({
       <Section
         {...sec("shape")}
         title="本体形状・サイズ"
+        help="断面（丸/多角形/波型/指針）と径・高さ、丸ボディは樽/くびれのふくらみも。"
         summary={`${short(BODY_SHAPE_LABELS[params.bodyShape])} φ${params.bodyDiameter}×H${params.bodyHeight}`}
       >
         <h3 className="subgroup__title">本体形状</h3>
@@ -349,6 +362,7 @@ export function Controls({
             <button
               key={s}
               className={`toggle__btn${params.bodyShape === s ? " is-active" : ""}`}
+              aria-pressed={params.bodyShape === s}
               onClick={() => set({ bodyShape: s })}
             >
               {BODY_SHAPE_LABELS[s]}
@@ -454,6 +468,7 @@ export function Controls({
       <Section
         {...sec("top")}
         title="天面"
+        help="フチの面取り/丸めと、天面の凹み（リセス/すり鉢）や凸（ドーム）を選びます。"
         summary={`${short(TOP_EDGE_LABELS[params.topEdgeStyle])}・${short(TOP_STYLE_LABELS[params.topStyle])}`}
       >
         <h3 className="subgroup__title">天面エッジ</h3>
@@ -462,6 +477,7 @@ export function Controls({
             <button
               key={style}
               className={`toggle__btn${params.topEdgeStyle === style ? " is-active" : ""}`}
+              aria-pressed={params.topEdgeStyle === style}
               onClick={() => set({ topEdgeStyle: style })}
             >
               {TOP_EDGE_LABELS[style]}
@@ -484,6 +500,7 @@ export function Controls({
             <button
               key={style}
               className={`toggle__btn${params.topStyle === style ? " is-active" : ""}`}
+              aria-pressed={params.topStyle === style}
               onClick={() => set({ topStyle: style })}
             >
               {TOP_STYLE_LABELS[style]}
@@ -526,6 +543,7 @@ export function Controls({
       <Section
         {...sec("side")}
         title="側面"
+        help="指掛かりのテクスチャ（縦溝/ローレット/横溝/スクープ）と、裾のフランジ段。"
         summary={`${short(TEXTURE_LABELS[params.surfaceTexture])}${params.skirt === "flange" ? "・フランジ" : ""}`}
       >
         <h3 className="subgroup__title">側面テクスチャ</h3>
@@ -534,6 +552,7 @@ export function Controls({
             <button
               key={tex}
               className={`toggle__btn${params.surfaceTexture === tex ? " is-active" : ""}`}
+              aria-pressed={params.surfaceTexture === tex}
               onClick={() => set({ surfaceTexture: tex })}
             >
               {TEXTURE_LABELS[tex]}
@@ -604,6 +623,7 @@ export function Controls({
             <button
               key={s}
               className={`toggle__btn${params.skirt === s ? " is-active" : ""}`}
+              aria-pressed={params.skirt === s}
               onClick={() => set({ skirt: s })}
             >
               {SKIRT_LABELS[s]}
@@ -635,6 +655,7 @@ export function Controls({
       <Section
         {...sec("marks")}
         title="指標・目盛り"
+        help="向きを示す指標（刻線/ディンプル）と、天面のロータリー目盛りを彫ります。"
         summary={`${short(INDICATOR_LABELS[params.indicator])}${params.tickRing === "ticks" ? `・目盛り${params.tickCount}本` : ""}`}
       >
         <h3 className="subgroup__title">指標（天面）</h3>
@@ -643,6 +664,7 @@ export function Controls({
             <button
               key={type}
               className={`toggle__btn${params.indicator === type ? " is-active" : ""}`}
+              aria-pressed={params.indicator === type}
               onClick={() => set({ indicator: type })}
             >
               {INDICATOR_LABELS[type]}
@@ -692,6 +714,7 @@ export function Controls({
             <button
               key={t}
               className={`toggle__btn${params.tickRing === t ? " is-active" : ""}`}
+              aria-pressed={params.tickRing === t}
               onClick={() => set({ tickRing: t })}
             >
               {t === "none" ? "なし" : "目盛りあり"}
@@ -738,6 +761,7 @@ export function Controls({
       <Section
         {...sec("print")}
         title="印刷サポート"
+        help="3Dプリント向けの底面の面取りと、最適クリアランスを探す公差テストピース。"
         summary={
           params.bottomChamfer > 0.05
             ? `底面取り ${params.bottomChamfer.toFixed(1)}mm`
@@ -768,7 +792,12 @@ export function Controls({
         </p>
       </Section>
 
-      <Section {...sec("export")} title="書き出し・共有" summary="STL / STEP / JSON / 注文コード">
+      <Section
+        {...sec("export")}
+        title="書き出し・共有"
+        help="3Dデータ（STL/STEP）の書き出し、URL共有、JSON保存、メーカー向け注文コード。"
+        summary="STL / STEP / JSON / 注文コード"
+      >
         <h3 className="subgroup__title">3Dデータ書き出し</h3>
         <div className="export">
           <button disabled={busy} onClick={() => onExport("stl")}>

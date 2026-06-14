@@ -227,7 +227,7 @@ export function Viewer({
   }, [mesh]);
 
   return (
-    <div className="viewer">
+    <div className="viewer" role="region" aria-label="3Dプレビュー">
       <div ref={mountRef} className="viewer__canvas" />
       <div className="viewer__tools">
         <button title="全体が収まるようにフィット" onClick={() => frameModel()}>
