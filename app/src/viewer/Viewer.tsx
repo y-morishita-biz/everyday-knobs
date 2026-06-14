@@ -166,6 +166,38 @@ export function Viewer({
     };
   }, []);
 
+  // Viewer keyboard shortcuts: F = fit, 1/2/3 = views, 0 = auto-rotate.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      switch (e.key) {
+        case "f":
+        case "F":
+          frameModel();
+          break;
+        case "1":
+          setView("iso");
+          break;
+        case "2":
+          setView("front");
+          break;
+        case "3":
+          setView("top");
+          break;
+        case "0":
+          toggleRotate();
+          break;
+        default:
+          return;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Recolor the scene (background, grid) and the knob surface when the theme or
   // accent color changes. CSS vars are the single source of truth.
   useEffect(() => {

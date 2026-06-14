@@ -105,6 +105,7 @@ interface ControlsProps {
   onSetTheme: (t: "light" | "dark") => void;
   accent: string | null;
   onSetAccent: (hex: string | null) => void;
+  onHelp: () => void;
   error: string | null;
   notice: string | null;
 }
@@ -209,6 +210,7 @@ export function Controls({
   onSetTheme,
   accent,
   onSetAccent,
+  onHelp,
   error,
   notice,
 }: ControlsProps) {
@@ -272,6 +274,14 @@ export function Controls({
             🎲 ランダム
           </button>
         </div>
+        <button
+          className="theme-toggle"
+          onClick={onHelp}
+          aria-label="ヘルプ・ショートカット"
+          title="ヘルプ・ショートカット (?)"
+        >
+          ?
+        </button>
         <AppearanceMenu
           theme={theme}
           onSetTheme={onSetTheme}
