@@ -20,8 +20,8 @@
   --bg: #e6e9f0;
   --panel: #e6e9f0;
   --panel-2: #eaedf4;
-  --text: #4a4f63;
-  --muted: #8b90a4;
+  --text: #3f4458;
+  --muted: #6d7286;
   --accent: #7c5cff;
   --accent-text: #ffffff;
   --border: transparent;
@@ -939,10 +939,6 @@ body {
 .acc__head:hover {
   background: none;
   color: var(--accent);
-}
-
-.acc.is-open {
-  box-shadow: var(--neu-inset-sm);
 }
 
 /* Toggle buttons */
