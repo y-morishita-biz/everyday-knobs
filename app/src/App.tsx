@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cad } from "./cad/cadClient";
 import { DEFAULT_PARAMS, type KnobParams } from "./cad/params";
 import { encodeOrderCode, parseConfig, serializeConfig } from "./cad/config";
@@ -11,7 +11,10 @@ import { useTheme } from "./useTheme";
 import { useAccent } from "./useAccent";
 import type { ExportFormat } from "./worker/cad.worker";
 import { Controls } from "./ui/Controls";
+import { HelpOverlay } from "./ui/HelpOverlay";
 import { Viewer } from "./viewer/Viewer";
+
+const ONBOARDED_KEY = "everyday-knobs.onboarded";
 
 /** Decode params from the URL hash (#c=…), if a valid code is present. */
 function paramsFromHash(): KnobParams | null {
@@ -33,6 +36,19 @@ export default function App() {
   const [myPresets, setMyPresets] = useState<KnobPreset[]>(loadMyPresets);
   const [theme, setTheme] = useTheme();
   const { accent, setAccent } = useAccent();
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // First-run welcome overlay.
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(ONBOARDED_KEY)) {
+        setHelpOpen(true);
+        localStorage.setItem(ONBOARDED_KEY, "1");
+      }
+    } catch {
+      /* private mode — skip */
+    }
+  }, []);
 
   // Preview mesh is driven by a coalescing, two-phase scheduler (see the hook).
   const { mesh, busy, phase, buildError } = useKnobMesh(params);
@@ -146,25 +162,34 @@ export default function App() {
     }
   };
 
-  // Keyboard: Ctrl/Cmd+Z = undo, Ctrl/Cmd+Shift+Z or Ctrl+Y = redo.
+  // Keyboard shortcuts. Latest handlers are read from a ref so the listener is
+  // attached once. Undo/redo on Ctrl/Cmd; R = random, ? = help (no modifier).
+  const keyActions = useRef({ undo, redo, random: handleRandom, toggleHelp: () => {} });
+  keyActions.current = { undo, redo, random: handleRandom, toggleHelp: () => setHelpOpen((o) => !o) };
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      const a = keyActions.current;
       const mod = e.ctrlKey || e.metaKey;
-      if (!mod) return;
       const key = e.key.toLowerCase();
-      if (key === "z" && !e.shiftKey) {
+      if (mod && key === "z" && !e.shiftKey) {
         e.preventDefault();
-        undo();
-      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        a.undo();
+      } else if (mod && ((key === "z" && e.shiftKey) || key === "y")) {
         e.preventDefault();
-        redo();
+        a.redo();
+      } else if (!mod && key === "r") {
+        e.preventDefault();
+        a.random();
+      } else if (!mod && (e.key === "?" || (e.key === "/" && e.shiftKey))) {
+        e.preventDefault();
+        a.toggleHelp();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [undo, redo]);
+  }, []);
 
   const handleLoadFile = async (file: File) => {
     try {
@@ -213,10 +238,12 @@ export default function App() {
         onSetTheme={setTheme}
         accent={accent}
         onSetAccent={setAccent}
+        onHelp={() => setHelpOpen(true)}
         error={error}
         notice={notice}
       />
       <Viewer mesh={mesh} theme={theme} accent={accent} />
+      <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
