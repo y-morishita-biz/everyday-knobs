@@ -1,1 +1,21 @@
+# OS junk
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+*~
+
+# Claude Code local settings (per-user, not for the repo)
+.claude/
+
+# Node / build (app/ has its own too; catch-all here)
+node_modules/
+dist/
+
+# Logs & temp
+*.log
+.cache/
