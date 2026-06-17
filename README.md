@@ -153,5 +153,18 @@ everyday-knobs/
 │   ├── requirements_v1.md … 要件定義書 v1
 │   └── img/               … README用スクリーンショット
 ├── posts/                 … #まいにちのぶ 投稿アーカイブ（本文＋キャプチャ）
-└── reference/             … 対象エンコーダの一次資料（寸法・形状の「正」）
+└── reference/             … 対象エンコーダの実測寸法＋外観プレビュー
 ```
+
+---
+
+## ライセンス・クレジット
+
+- **コード**：[MIT License](LICENSE)（© 2026 penomo / dotting dots）。自由に利用・改変・再配布可（著作権表示は保持）。
+- **生成物**：このツールで書き出した STL / STEP は**あなたのもの**。商用利用も含め自由に使えます。
+- **対象エンコーダ**：EC11 / EC12E はアルプスアルパイン社の製品です。寸法は同社公式 CAD を解析した
+  実測値で、**メーカー配布 CAD（STEP/PDF）は再配布の懸念を避け本リポジトリには同梱していません**
+  （[`reference/`](reference/) 参照、原データは ALPS 公式ページから入手）。
+- **依存**：[Replicad](https://replicad.xyz/)（OpenCASCADE/WASM）・[Three.js](https://threejs.org/)・
+  [React](https://react.dev/)・[Vite](https://vitejs.dev/)（各ライセンスに従う）。
+- **作者**：penomo（[@penomo](https://x.com/penomo)） — #まいにちのぶ
