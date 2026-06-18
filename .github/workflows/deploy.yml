@@ -1,0 +1,59 @@
+name: Deploy to GitHub Pages
+
+# main に push されるたびに、LP(site/) とジェネレーター(app/) をビルドして
+# GitHub Pages に公開する。/ = LP、/app/ = ジェネレーター。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build generator (app/ → /app/)
+        working-directory: app
+        run: |
+          npm ci
+          npm run build
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          # LP（site/ の中身を公開ルートへ。README は除外）
+          if [ -d site ]; then cp -r site/. _site/; fi
+          rm -f _site/README.md
+          # ジェネレーター本体を /app/ へ
+          mkdir -p _site/app
+          cp -r app/dist/. _site/app/
+          # Jekyll を無効化（_ 始まりフォルダ対策・高速化）
+          touch _site/.nojekyll
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
