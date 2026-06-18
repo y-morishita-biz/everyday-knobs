@@ -770,6 +770,36 @@ body {
   box-shadow: var(--neu-inset-sm);
 }
 
+/* Sidebar header: brand + home link */
+.panel__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-btn {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--neu-raised-sm);
+  text-decoration: none;
+  transition: box-shadow 0.15s, color 0.15s;
+}
+
+.home-btn:hover {
+  color: var(--accent);
+}
+
+.home-btn:active {
+  box-shadow: var(--neu-inset-sm);
+}
+
 /* Appearance popover (theme + accent color) — Day 26b */
 .appmenu {
   position: relative;

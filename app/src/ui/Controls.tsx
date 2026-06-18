@@ -259,19 +259,44 @@ export function Controls({
 
   return (
     <aside className="panel" aria-label="ノブのパラメータ">
-      <h1 className="panel__title">everyday knobs</h1>
-      <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
+      <div className="panel__head">
+        <div className="panel__brand">
+          <h1 className="panel__title">everyday knobs</h1>
+          <p className="panel__subtitle">1日1ノブ ジェネレーター</p>
+        </div>
+        <a
+          className="home-btn"
+          href="../"
+          aria-label="トップ画面へ戻る"
+          title="トップへ戻る"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 11.5 12 4l9 7.5" />
+            <path d="M5 10v9h5v-5h4v5h5v-9" />
+          </svg>
+        </a>
+      </div>
 
       <div className="topbar">
         <div className="actions">
           <button onClick={onUndo} disabled={!canUndo} title="元に戻す (Ctrl+Z)">
-            ↶ 戻す
+            戻す
           </button>
           <button onClick={onRedo} disabled={!canRedo} title="やり直し (Ctrl+Shift+Z)">
-            ↷ 進む
+            進む
           </button>
           <button className="actions__random" onClick={onRandom} title="ランダムに生成">
-            🎲 ランダム
+            ランダム
           </button>
         </div>
         <button
