@@ -16,9 +16,19 @@ import { Viewer } from "./viewer/Viewer";
 
 const ONBOARDED_KEY = "everyday-knobs.onboarded";
 
-/** Decode params from the URL hash (#c=…), if a valid code is present. */
+/**
+ * Decode params from the URL hash. Supports a shared order code (#c=…) or a
+ * built-in preset id (#preset=…) — the latter lets the landing-page gallery
+ * deep-link straight into a configured knob.
+ */
 function paramsFromHash(): KnobParams | null {
-  const m = window.location.hash.match(/[#&]c=([^&]+)/);
+  const hash = window.location.hash;
+  const pre = hash.match(/[#&]preset=([\w-]+)/);
+  if (pre) {
+    const found = PRESETS.find((p) => p.id === pre[1]);
+    if (found) return found.params;
+  }
+  const m = hash.match(/[#&]c=([^&]+)/);
   if (!m) return null;
   try {
     return parseConfig(decodeURIComponent(m[1]));

@@ -17,7 +17,7 @@ site/
 ├── assets/
 │   ├── lp.js              … グリフ生成 / テーマ・アクセント切替 / ヒーロー3D
 │   ├── three.module.min.js, three.core.min.js … Three.js（vendor）
-│   ├── hero-knob.json     … ヒーローの3Dノブメッシュ（アプリのエンジンでベイク）
+│   ├── hero/<id>.json     … ヒーローの3Dノブメッシュ（複数・読み込み毎にランダム選択）
 │   └── og.png             … OGP / X カード画像
 └── README.md       … このファイル（デプロイ時は除外）
 ```
@@ -26,9 +26,11 @@ site/
 
 - **テーマ / アクセント色はアプリと localStorage 共有**（`everyday-knobs.theme` / `.accent`）。
   LP で選んだ色のまま `/app/` に入れます。
-- ヒーローのノブは Three.js の実3D（斜め上ビュー・自動回転）。`prefers-reduced-motion`
+- ヒーローのノブは Three.js の実3D（斜め上ビュー・自動回転）。読み込み毎に
+  `assets/hero/<id>.json` から1つをランダムに表示。`prefers-reduced-motion`
   で停止、WebGL不可時は `og.png` にフォールバック。
-- ノブメッシュの作り直し：アプリのエンジンで `buildKnob(params).mesh()` → `{positions,normals,indices}`
-  を JSON 出力して `assets/hero-knob.json` を差し替え。
+- ノブメッシュの作り直し：[`../app/bake-hero.ts`](../app/bake-hero.ts) を esbuild で
+  バンドルして node 実行（手順はファイル冒頭コメント）。`assets/hero/` に出力。
+  作例ギャラリーは `app/#preset=<id>` で各プリセットへディープリンクする。
 - Claude Design のデザイン元データは [`../design/`](../design/) に保管（公開はしない）。
 - 要件は [`../docs/site-plan.md`](../docs/site-plan.md)。
