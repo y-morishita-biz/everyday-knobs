@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>everyday knobs — ブラウザで作る、ツマミ・ジェネレーター</title>
+<meta name="description" content="ALPS ロータリーエンコーダ用のツマミを、ブラウザでパラメトリックに生成。スライダーで 3D プレビュー、STL / STEP で書き出し。インストール不要・全部ブラウザで完結。">
+<link rel="canonical" href="https://y-morishita-biz.github.io/everyday-knobs/">
+<meta name="theme-color" content="#262a31">
+<!-- Open Graph / X -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="everyday knobs — ブラウザで作る、ツマミ・ジェネレーター">
+<meta property="og:description" content="ALPS エンコーダ用のノブを、その場でデザイン → STL / STEP で書き出し。インストール不要・全部ブラウザで完結。">
+<meta property="og:image" content="assets/og.png">
+<meta property="og:url" content="https://y-morishita-biz.github.io/everyday-knobs/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@penomo">
+<meta name="twitter:title" content="everyday knobs — ブラウザで作る、ツマミ・ジェネレーター">
+<meta name="twitter:description" content="ALPS エンコーダ用のノブを、その場でデザイン → STL / STEP で書き出し。">
+<meta name="twitter:image" content="assets/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='32' fill='none' stroke='%239d7bff' stroke-width='8'/%3E%3Cline x1='50' y1='20' x2='50' y2='34' stroke='%239d7bff' stroke-width='9' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script>
+  // 初回ペイント前にテーマ/アクセントを反映（アプリと localStorage 共有）
+  try {
+    var d = document.documentElement;
+    var t = localStorage.getItem("everyday-knobs.theme");
+    if (t === "light") {
+      d.dataset.theme = "light";
+      var L = {"--bg":"#e6e9f0","--text":"#3f4458","--muted":"#6d7286","--sh-dark":"#c5c9d6","--sh-light":"#ffffff"};
+      for (var k in L) d.style.setProperty(k, L[k]);
+    }
+    var a = localStorage.getItem("everyday-knobs.accent");
+    if (a) d.style.setProperty("--accent", a);
+    else if (t === "light") d.style.setProperty("--accent", "#7c5cff");
+  } catch (e) {}
+</script>
+<style>
+  :root{
+    --bg:#262a31; --text:#d4d9e3; --muted:#8b92a3;
+    --accent:#9d7bff; --sh-dark:#1e2127; --sh-light:#30343d;
+    --accent-deep: color-mix(in oklab, var(--accent) 100%, #000 30%);
+    --accent-lite: color-mix(in oklab, var(--accent) 55%, #fff);
+    --accent-soft: color-mix(in oklab, var(--accent) 24%, transparent);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; font-family:'Noto Sans JP',system-ui,-apple-system,sans-serif;
+    background:var(--bg); color:var(--text); overflow-x:hidden;
+    transition:background .25s, color .25s;
+  }
+  ::selection{background:var(--accent); color:#fff}
+  a{color:inherit}
+  .wrap{max-width:1180px; margin:0 auto;}
+  .sect{max-width:1180px; margin:0 auto; padding:64px 24px;}
+  .kicker{font-size:12px; font-weight:700; letter-spacing:3px; color:var(--accent); margin-bottom:12px;}
+  .h2{font-size:clamp(26px,3.4vw,40px); font-weight:800; letter-spacing:-.5px; line-height:1.2; margin:0 0 14px;}
+  .lead{color:var(--muted); font-size:16px; line-height:1.7;}
+  .card{background:var(--bg); border-radius:22px; box-shadow:-8px -8px 18px var(--sh-light), 8px 8px 18px var(--sh-dark);}
+  .lift{transition:transform .15s} .lift:hover{transform:translateY(-2px)}
+  .lift4{transition:transform .16s} .lift4:hover{transform:translateY(-4px)}
+  .btn-primary{
+    text-decoration:none; color:#fff; background:var(--accent); font-weight:700;
+    border-radius:16px; box-shadow:0 12px 28px var(--accent-soft); display:inline-block;
+  }
+  .btn-ghost{
+    text-decoration:none; color:var(--text); font-weight:700; border-radius:16px;
+    background:var(--bg); box-shadow:-6px -6px 14px var(--sh-light), 6px 6px 14px var(--sh-dark);
+  }
+  .navlink{color:var(--muted); text-decoration:none; font-size:14px; font-weight:500; transition:color .15s}
+  .navlink:hover{color:var(--text)}
+  .footlink{color:var(--muted); text-decoration:none; font-size:13.5px; transition:color .15s}
+  .footlink:hover{color:var(--accent)}
+  .pill{display:inline-block; font-size:12.5px; font-weight:600; color:var(--text); padding:6px 13px; border-radius:999px;
+    box-shadow:inset 2px 2px 5px var(--sh-dark), inset -2px -2px 5px var(--sh-light);}
+  .well{box-shadow:inset 9px 9px 22px var(--sh-dark), inset -9px -9px 22px var(--sh-light);}
+  .theme-toggle{
+    width:42px; height:42px; border:none; border-radius:50%; cursor:pointer;
+    background:var(--bg); color:var(--text); font-size:17px;
+    box-shadow:-4px -4px 9px var(--sh-light), 4px 4px 9px var(--sh-dark); transition:transform .15s;
+  }
+  .theme-toggle:active{box-shadow:inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light)}
+  .swatch{width:34px; height:34px; border-radius:50%; border:none; cursor:pointer; background:var(--bg);
+    display:grid; place-items:center; transition:box-shadow .2s;
+    box-shadow:-3px -3px 7px var(--sh-light), 3px 3px 7px var(--sh-dark);}
+  .swatch i{width:15px; height:15px; border-radius:50%; display:block;}
+  @keyframes ek-spin{to{transform:rotate(360deg)}}
+  .ek-spin{animation:ek-spin 22s linear infinite}
+  [data-show]>article:nth-child(even){flex-direction:row-reverse}
+  @media (max-width:880px){
+    .hero{grid-template-columns:1fr !important; text-align:center}
+    .hero .hero-actions{justify-content:center}
+    .hero .swatch-row{justify-content:center}
+    .nav{display:none !important}
+    .col3{grid-template-columns:1fr !important}
+    .col2{grid-template-columns:1fr !important}
+  }
+  @media (max-width:760px){
+    [data-show]>article{flex-direction:column !important; text-align:center}
+    [data-show]>article .tagline{justify-content:center}
+  }
+  @media (prefers-reduced-motion:reduce){ .ek-spin{animation:none} html{scroll-behavior:auto} }
+</style>
+</head>
+<body>
+
+<header style="position:sticky; top:0; z-index:50; backdrop-filter:blur(12px); background:color-mix(in oklab,var(--bg) 80%,transparent);">
+  <div class="wrap" style="padding:13px 24px; display:flex; align-items:center; gap:22px;">
+    <a href="#top" style="display:flex; align-items:center; gap:11px; text-decoration:none;">
+      <span class="logo-badge" style="width:34px; height:34px; border-radius:50%; display:grid; place-items:center; flex:none; box-shadow:inset 3px 3px 6px var(--sh-dark), inset -3px -3px 6px var(--sh-light); padding:7px;">
+        <svg viewBox="0 0 100 100" width="100%" height="100%" fill="none"><circle cx="50" cy="50" r="30" stroke="var(--accent)" stroke-width="6"></circle><line x1="50" y1="22" x2="50" y2="34" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"></line></svg>
+      </span>
+      <span style="font-weight:800; letter-spacing:-.2px; font-size:18px;">everyday knobs</span>
+    </a>
+    <nav class="nav" style="display:flex; gap:26px; margin-left:14px;">
+      <a class="navlink" href="#value">特徴</a>
+      <a class="navlink" href="#showcase">作例</a>
+      <a class="navlink" href="#steps">使い方</a>
+      <a class="navlink" href="#story">#まいにちのぶ</a>
+    </nav>
+    <div style="margin-left:auto; display:flex; align-items:center; gap:12px;">
+      <button id="theme-toggle" class="theme-toggle" aria-label="テーマ切替"><span id="theme-icon">☀</span></button>
+      <a href="app/" class="btn-primary lift" style="font-size:14px; padding:11px 20px; border-radius:14px; box-shadow:0 8px 20px var(--accent-soft); white-space:nowrap;">ジェネレーターを開く →</a>
+    </div>
+  </div>
+</header>
+
+<a id="top"></a>
+<section class="hero" style="max-width:1180px; margin:0 auto; padding:64px 24px 40px; display:grid; grid-template-columns:1.05fr .95fr; gap:48px; align-items:center;">
+  <div>
+    <div class="pill" style="font-weight:700; letter-spacing:1px; color:var(--accent); margin-bottom:24px;">1日1ノブ ・ 30日でつくったジェネレーター</div>
+    <h1 style="font-size:clamp(34px,5.2vw,62px); font-weight:800; letter-spacing:-1px; line-height:1.1; margin:0 0 20px;">自分だけの<br>ツマミを。</h1>
+    <p class="lead" style="font-size:clamp(15px,1.5vw,18px); line-height:1.8; max-width:48ch; margin:0 0 30px;">ALPS ロータリーエンコーダ用のノブを、その場でデザイン。スライダーをいじって 3D プレビュー、STL / STEP で書き出すだけ。インストール不要、ぜんぶブラウザで完結します。</p>
+    <div class="hero-actions" style="display:flex; gap:14px; flex-wrap:wrap; margin-bottom:34px;">
+      <a href="app/" class="btn-primary lift" style="font-size:16px; padding:15px 28px;">ジェネレーターを開く →</a>
+      <a href="#steps" class="btn-ghost lift" style="font-size:16px; padding:15px 28px;">使い方を見る</a>
+    </div>
+    <div class="swatch-row" style="display:flex; align-items:center; gap:13px; flex-wrap:wrap;">
+      <span style="font-size:13px; color:var(--muted); font-weight:500;">色を変えてみる</span>
+      <div id="swatch-row" style="display:flex; gap:10px;"></div>
+    </div>
+  </div>
+  <div style="display:grid; place-items:center;">
+    <div class="well" style="width:min(440px,84vw); aspect-ratio:1; border-radius:50%; display:grid; place-items:center; padding:36px;">
+      <div id="hero3d" style="width:100%; aspect-ratio:1;"></div>
+    </div>
+  </div>
+</section>
+
+<section id="value" class="sect">
+  <div class="kicker">VALUE</div>
+  <h2 class="h2" style="margin-bottom:40px;">いますぐ、気軽に。</h2>
+  <div class="col3" style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
+    <div class="card" style="padding:30px;">
+      <div style="width:58px; height:58px; border-radius:16px; display:grid; place-items:center; margin-bottom:20px; box-shadow:inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M4 19h16"></path></svg>
+      </div>
+      <h3 style="font-size:19px; font-weight:700; margin:0 0 9px;">インストール不要</h3>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">ブラウザを開けばすぐ。アカウントもサーバーも、アプリのインストールも要りません。</p>
+    </div>
+    <div class="card" style="padding:30px;">
+      <div style="width:58px; height:58px; border-radius:16px; display:grid; place-items:center; margin-bottom:20px; box-shadow:inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"></path><path d="m3 7 9 5 9-5"></path><path d="M12 22V12"></path></svg>
+      </div>
+      <h3 style="font-size:19px; font-weight:700; margin:0 0 9px;">思いのままの形</h3>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">丸・多角形・波型・指針。ローレットも目盛りもドームも、組み合わせは無限大です。</p>
+    </div>
+    <div class="card" style="padding:30px;">
+      <div style="width:58px; height:58px; border-radius:16px; display:grid; place-items:center; margin-bottom:20px; box-shadow:inset 3px 3px 7px var(--sh-dark), inset -3px -3px 7px var(--sh-light);">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"></circle><path d="M12 14v7"></path><path d="M9 9h.01"></path></svg>
+      </div>
+      <h3 style="font-size:19px; font-weight:700; margin:0 0 9px;">実際に挿さる・刷れる</h3>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">実寸公差と公差テストピースで、印刷したノブが本当に軸へ挿さる。机上の空論にしません。</p>
+    </div>
+  </div>
+</section>
+
+<section id="showcase" class="sect">
+  <div class="kicker">SHOWCASE</div>
+  <h2 class="h2">このツールで、できること。</h2>
+  <p class="lead" style="max-width:52ch; margin:0 0 44px;">形・テクスチャ・天面・印刷・共有。パラメータの組み合わせでどこまで化けるかを、まずは眺めてみてください。</p>
+  <div id="showcase-list" data-show style="display:flex; flex-direction:column; gap:26px;"></div>
+</section>
+
+<section id="steps" class="sect">
+  <div class="kicker">HOW IT WORKS</div>
+  <h2 class="h2" style="margin-bottom:40px;">3ステップで、書き出しまで。</h2>
+  <div class="col3" style="display:grid; grid-template-columns:repeat(3,1fr); gap:22px;">
+    <div class="card" style="padding:32px;">
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;"><span style="font-size:30px; font-weight:800; color:var(--accent);">01</span><span style="font-size:19px; font-weight:700;">選ぶ</span></div>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">作例ギャラリーから、つくりたい形に近いものをタップ。それが出発点になります。</p>
+    </div>
+    <div class="card" style="padding:32px;">
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;"><span style="font-size:30px; font-weight:800; color:var(--accent);">02</span><span style="font-size:19px; font-weight:700;">調整</span></div>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">スライダーとトグルで自分好みに。迷ったら 🎲 ランダムで思いがけない形に出会えます。</p>
+    </div>
+    <div class="card" style="padding:32px;">
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;"><span style="font-size:30px; font-weight:800; color:var(--accent);">03</span><span style="font-size:19px; font-weight:700;">書き出す</span></div>
+      <p class="lead" style="font-size:14.5px; line-height:1.75; margin:0;">STL / STEP / PNG でダウンロード。印刷して、軸にそのまま挿せます。</p>
+    </div>
+  </div>
+</section>
+
+<section id="gallery" class="sect">
+  <div class="kicker">GALLERY</div>
+  <h2 class="h2">作例ギャラリー</h2>
+  <p class="lead" style="margin:0 0 40px;">気になる形をタップして、そのままジェネレーターへ。</p>
+  <div id="gallery-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(155px,1fr)); gap:18px;"></div>
+</section>
+
+<section id="encoders" class="sect">
+  <div class="kicker">ENCODERS</div>
+  <h2 class="h2">お手持ちの部品で。</h2>
+  <p class="lead" style="max-width:54ch; margin:0 0 40px;">軸寸法はメーカー STEP から実測。公差はスライダーで微調整できます。</p>
+  <div class="col2" style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+    <div class="card" style="padding:32px; display:flex; gap:22px; align-items:center;">
+      <div id="ec11-glyph" style="flex:none; width:96px; height:96px; border-radius:50%; display:grid; place-items:center; padding:24px; box-shadow:inset 5px 5px 11px var(--sh-dark), inset -5px -5px 11px var(--sh-light);"></div>
+      <div><h3 style="font-size:21px; font-weight:800; margin:0 0 4px;">ALPS EC11</h3><div style="font-size:13px; color:var(--accent); font-weight:600; margin-bottom:10px;">φ6 ・ Dカット軸</div><p class="lead" style="font-size:14px; line-height:1.7; margin:0;">EC1110120005 に対応。平面（Dカット）の向きまで実寸でフィットします。</p></div>
+    </div>
+    <div class="card" style="padding:32px; display:flex; gap:22px; align-items:center;">
+      <div id="ec12-glyph" style="flex:none; width:96px; height:96px; border-radius:50%; display:grid; place-items:center; padding:24px; box-shadow:inset 5px 5px 11px var(--sh-dark), inset -5px -5px 11px var(--sh-light);"></div>
+      <div><h3 style="font-size:21px; font-weight:800; margin:0 0 4px;">ALPS EC12E</h3><div style="font-size:13px; color:var(--accent); font-weight:600; margin-bottom:10px;">φ6 ・ 中空軸</div><p class="lead" style="font-size:14px; line-height:1.7; margin:0;">EC12E085 に対応。中空軸の内径もカバー。嵌合クリアランスは調整可。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="story" class="sect">
+  <div class="card" style="border-radius:30px; padding:clamp(32px,5vw,56px);">
+    <div class="kicker">#まいにちのぶ</div>
+    <h2 class="h2" style="margin-bottom:18px;">30日間、1日1ノブ。</h2>
+    <p class="lead" style="font-size:16px; line-height:1.85; max-width:60ch; margin:0 0 32px;">毎日ひとつ機能を足して、その日の機能で作例をひとつ出して、X に投稿する。<strong style="color:var(--text); font-weight:700;">#まいにちのぶ</strong> の30日で、このジェネレーターは育ちました。開発の物語そのものが、いちばんの作例集です。</p>
+    <div id="days-row" style="display:flex; gap:14px; overflow-x:auto; padding:6px 2px 16px; margin-bottom:30px;"></div>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;">
+      <a href="https://x.com/penomo" target="_blank" rel="noopener" class="btn-primary lift" style="font-size:15px; padding:13px 24px; border-radius:14px; box-shadow:0 10px 24px var(--accent-soft); display:inline-flex; align-items:center; gap:9px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-7-6.1 7H1.7l8.1-9.3L1 2h7l4.8 6.4L18.9 2Zm-2.4 18h1.9L7.6 3.9H5.6L16.5 20Z"></path></svg>
+        @penomo をフォロー
+      </a>
+      <span style="font-size:13.5px; color:var(--muted); font-weight:500;">ハッシュタグ #まいにちのぶ で全アーカイブ</span>
+    </div>
+  </div>
+</section>
+
+<section style="max-width:1180px; margin:0 auto; padding:48px 24px 80px;">
+  <div style="text-align:center; background:var(--bg); border-radius:30px; padding:clamp(48px,7vw,80px) 24px; box-shadow:inset 8px 8px 20px var(--sh-dark), inset -8px -8px 20px var(--sh-light);">
+    <h2 style="font-size:clamp(30px,4.6vw,52px); font-weight:800; letter-spacing:-1px; line-height:1.15; margin:0 0 26px;">さあ、回す道具を作ろう。</h2>
+    <a href="app/" class="btn-primary lift" style="font-size:17px; padding:17px 36px; border-radius:18px; box-shadow:0 14px 32px var(--accent-soft);">ジェネレーターを開く →</a>
+    <div style="margin-top:24px; display:flex; gap:22px; justify-content:center;">
+      <a class="footlink" href="https://github.com/y-morishita-biz/everyday-knobs" target="_blank" rel="noopener" style="font-size:14px; font-weight:600;">GitHub</a>
+      <a class="footlink" href="https://x.com/penomo" target="_blank" rel="noopener" style="font-size:14px; font-weight:600;">X @penomo</a>
+    </div>
+  </div>
+</section>
+
+<footer style="border-top:1px solid color-mix(in oklab,var(--muted) 22%,transparent);">
+  <div class="wrap" style="padding:40px 24px; display:flex; gap:30px; flex-wrap:wrap; justify-content:space-between; align-items:flex-start;">
+    <div style="max-width:280px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+        <span style="width:30px; height:30px; border-radius:50%; display:grid; place-items:center; flex:none; box-shadow:inset 2px 2px 5px var(--sh-dark), inset -2px -2px 5px var(--sh-light); padding:6px;"><svg viewBox="0 0 100 100" width="100%" height="100%" fill="none"><circle cx="50" cy="50" r="30" stroke="var(--accent)" stroke-width="7"></circle><line x1="50" y1="22" x2="50" y2="34" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"></line></svg></span>
+        <span style="font-weight:800; font-size:16px;">everyday knobs</span>
+      </div>
+      <p class="lead" style="font-size:13px; line-height:1.7; margin:0;">ブラウザで作る、ロータリーエンコーダ用ツマミ・ジェネレーター。</p>
+    </div>
+    <div style="display:flex; gap:48px; flex-wrap:wrap;">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:1px; color:var(--text); margin-bottom:2px;">プロダクト</div>
+        <a class="footlink" href="app/">ジェネレーター</a>
+        <a class="footlink" href="#steps">使い方</a>
+        <a class="footlink" href="#gallery">作例ギャラリー</a>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:1px; color:var(--text); margin-bottom:2px;">リンク</div>
+        <a class="footlink" href="https://github.com/y-morishita-biz/everyday-knobs" target="_blank" rel="noopener">GitHub</a>
+        <a class="footlink" href="https://x.com/penomo" target="_blank" rel="noopener">X @penomo</a>
+        <a class="footlink" href="#story">#まいにちのぶ</a>
+      </div>
+    </div>
+  </div>
+  <div class="wrap" style="padding:18px 24px 36px; color:var(--muted); font-size:12px;">制作：penomo / dotting dots　・　技術：Replicad ・ Three.js ・ React</div>
+</footer>
+
+<script type="module" src="./assets/lp.js"></script>
+</body>
+</html>
