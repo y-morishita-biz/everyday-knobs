@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#262a31; --text:#d4d9e3; --muted:#8b92a3;
+    --accent:#9d7bff; --sh-dark:#1e2127; --sh-light:#30343d;
+    --accent-deep: color-mix(in oklab, var(--accent) 100%, #000 30%);
+    --accent-lite: color-mix(in oklab, var(--accent) 55%, #fff);
+    --accent-soft: color-mix(in oklab, var(--accent) 24%, transparent);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0}
+  ::selection{background:var(--accent);color:#fff}
+  @keyframes ek-spin{to{transform:rotate(360deg)}}
+  .ek-spin{animation:ek-spin 20s linear infinite}
+  @media (prefers-reduced-motion:reduce){.ek-spin{animation:none}}
+  [data-show]>article:nth-child(even){flex-direction:row-reverse}
+  @media (max-width:880px){
+    [data-hero]{grid-template-columns:1fr !important;text-align:center}
+    [data-hero] [data-heroactions]{justify-content:center}
+    [data-hero] [data-swatchrow]{justify-content:center}
+    [data-nav]{display:none !important}
+    [data-3col]{grid-template-columns:1fr !important}
+    [data-2col]{grid-template-columns:1fr !important}
+  }
+  @media (max-width:760px){
+    [data-show]>article{flex-direction:column !important;text-align:center}
+    [data-show]>article [data-tagline]{justify-content:center}
+  }
+</style>
+</helmet>
+<div ref="{{ rootRef }}" style="min-height:100vh;font-family:'Noto Sans JP',system-ui,-apple-system,sans-serif;overflow-x:hidden;"><div style="min-height:100vh;background:var(--bg);color:var(--text);">
+
+  <header style="position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:color-mix(in oklab,var(--bg) 80%,transparent);">
+    <div style="max-width:1180px;margin:0 auto;padding:13px 24px;display:flex;align-items:center;gap:22px;">
+      <a href="#top" style="display:flex;align-items:center;gap:11px;text-decoration:none;color:inherit;">
+        <span style="width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:inset 3px 3px 6px var(--sh-dark),inset -3px -3px 6px var(--sh-light);padding:7px;">
+          <svg viewBox="0 0 100 100" width="100%" height="100%" fill="none"><circle cx="50" cy="50" r="30" stroke="var(--accent)" stroke-width="6"></circle><line x1="50" y1="22" x2="50" y2="34" stroke="var(--accent)" stroke-width="7" stroke-linecap="round"></line></svg>
+        </span>
+        <span style="font-weight:800;letter-spacing:-0.2px;font-size:18px;">everyday knobs</span>
+      </a>
+      <nav data-nav="" style="display:flex;gap:26px;margin-left:14px;">
+        <a href="#value" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;" style-hover="color:var(--text)">特徴</a>
+        <a href="#showcase" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;" style-hover="color:var(--text)">作例</a>
+        <a href="#steps" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;" style-hover="color:var(--text)">使い方</a>
+        <a href="#story" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;" style-hover="color:var(--text)">#まいにちのぶ</a>
+      </nav>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+        <button onClick="{{ toggleTheme }}" aria-label="テーマ切替" style="width:42px;height:42px;border:none;border-radius:50%;cursor:pointer;background:var(--bg);color:var(--text);font-size:17px;box-shadow:-4px -4px 9px var(--sh-light),4px 4px 9px var(--sh-dark);transition:transform .15s;" style-active="box-shadow:inset 3px 3px 7px var(--sh-dark),inset -3px -3px 7px var(--sh-light)">{{ themeIcon }}</button>
+        <a href="app/" style="text-decoration:none;color:#fff;background:var(--accent);font-weight:700;font-size:14px;padding:11px 20px;border-radius:14px;box-shadow:0 8px 20px var(--accent-soft);transition:transform .15s;white-space:nowrap;" style-hover="transform:translateY(-2px)">ジェネレーターを開く →</a>
+      </div>
+    </div>
+  </header>
+
+  <a id="top"></a>
+  <section data-hero="" style="max-width:1180px;margin:0 auto;padding:64px 24px 40px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;">
+    
+    <div>
+      <div style="display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1px;color:var(--accent);padding:7px 14px;border-radius:999px;box-shadow:inset 2px 2px 5px var(--sh-dark),inset -2px -2px 5px var(--sh-light);margin-bottom:24px;">1日1ノブ ・ 30日でつくったジェネレーター</div>
+      <h1 style="font-size:clamp(34px,5.2vw,62px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin:0 0 20px;">自分だけの<div>ツマミを。</div></h1>
+      <p style="color: var(--muted); font-size: clamp(15px,1.5vw,18px); line-height: 1.8; max-width: 48ch; margin: 0 0 30px; display: block">ALPS ロータリーエンコーダ用のノブを、その場でデザイン。スライダーをいじって 3D プレビュー、STL / STEP で書き出すだけ。インストール不要、ぜんぶブラウザで完結します。</p>
+      <div data-heroactions="" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:34px;">
+        <a href="app/" style="text-decoration:none;color:#fff;background:var(--accent);font-weight:700;font-size:16px;padding:15px 28px;border-radius:16px;box-shadow:0 12px 28px var(--accent-soft);transition:transform .15s;" style-hover="transform:translateY(-2px)">ジェネレーターを開く →</a>
+        <a href="#steps" style="text-decoration:none;color:var(--text);font-weight:700;font-size:16px;padding:15px 28px;border-radius:16px;background:var(--bg);box-shadow:-6px -6px 14px var(--sh-light),6px 6px 14px var(--sh-dark);transition:transform .15s;" style-hover="transform:translateY(-2px)">使い方を見る</a>
+      </div>
+      <div data-swatchrow="" style="display:flex;align-items:center;gap:13px;flex-wrap:wrap;">
+        <span style="font-size:13px;color:var(--muted);font-weight:500;">色を変えてみる</span>
+        <sc-for list="{{ swatches }}" as="s" hint-placeholder-count="5">
+          <button onClick="{{ s.click }}" aria-label="アクセント色" style="{{ s.style }}"><span style="{{ s.dot }}"></span></button>
+        </sc-for>
+      </div>
+    </div><div style="display:grid;place-items:center;">
+      <div style="width:min(440px,84vw);aspect-ratio:1;border-radius:50%;display:grid;place-items:center;padding:48px;box-shadow:inset 9px 9px 22px var(--sh-dark),inset -9px -9px 22px var(--sh-light);">
+        <div style="width:100%;">{{ hero }}</div>
+      </div>
+    </div>
+  </section>
+
+  <section id="value" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">VALUE</div>
+    <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 40px;">いますぐ、気軽に。</h2>
+    <div data-3col="" style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;">
+      <div style="background:var(--bg);border-radius:22px;padding:30px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="width:58px;height:58px;border-radius:16px;display:grid;place-items:center;margin-bottom:20px;box-shadow:inset 3px 3px 7px var(--sh-dark),inset -3px -3px 7px var(--sh-light);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"></path><path d="m7 11 5 5 5-5"></path><path d="M4 19h16"></path></svg>
+        </div>
+        <h3 style="font-size:19px;font-weight:700;margin:0 0 9px;">インストール不要</h3>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">ブラウザを開けばすぐ。アカウントもサーバーも、アプリのインストールも要りません。</p>
+      </div>
+      <div style="background:var(--bg);border-radius:22px;padding:30px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="width:58px;height:58px;border-radius:16px;display:grid;place-items:center;margin-bottom:20px;box-shadow:inset 3px 3px 7px var(--sh-dark),inset -3px -3px 7px var(--sh-light);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 3 7v10l9 5 9-5V7z"></path><path d="m3 7 9 5 9-5"></path><path d="M12 22V12"></path></svg>
+        </div>
+        <h3 style="font-size:19px;font-weight:700;margin:0 0 9px;">思いのままの形</h3>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">丸・多角形・波型・指針。ローレットも目盛りもドームも、組み合わせは無限大です。</p>
+      </div>
+      <div style="background:var(--bg);border-radius:22px;padding:30px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="width:58px;height:58px;border-radius:16px;display:grid;place-items:center;margin-bottom:20px;box-shadow:inset 3px 3px 7px var(--sh-dark),inset -3px -3px 7px var(--sh-light);">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"></circle><path d="M12 14v7"></path><path d="M9 9h.01"></path></svg>
+        </div>
+        <h3 style="font-size:19px;font-weight:700;margin:0 0 9px;">実際に挿さる・刷れる</h3>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">実寸公差と公差テストピースで、印刷したノブが本当に軸へ挿さる。机上の空論にしません。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">SHOWCASE</div>
+    <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 14px;">このツールで、できること。</h2>
+    <p style="color:var(--muted);font-size:16px;line-height:1.7;max-width:52ch;margin:0 0 44px;">形・テクスチャ・天面・印刷・共有。パラメータの組み合わせでどこまで化けるかを、まずは眺めてみてください。</p>
+    <div data-show="" style="display:flex;flex-direction:column;gap:26px;">
+      <sc-for list="{{ showcase }}" as="b" hint-placeholder-count="5">
+        <article style="display:flex;gap:36px;align-items:center;background:var(--bg);border-radius:26px;padding:34px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+          <div style="flex:none;width:170px;height:170px;border-radius:50%;display:grid;place-items:center;padding:34px;box-shadow:inset 6px 6px 14px var(--sh-dark),inset -6px -6px 14px var(--sh-light);">
+            <div style="width:100%;">{{ b.svg }}</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--accent);margin-bottom:8px;">{{ b.kicker }}</div>
+            <h3 style="font-size:clamp(20px,2.4vw,27px);font-weight:800;letter-spacing:-0.3px;margin:0 0 10px;">{{ b.title }}</h3>
+            <p style="color:var(--muted);font-size:15px;line-height:1.8;margin:0 0 16px;">{{ b.desc }}</p>
+            <div data-tagline="" style="display:flex;gap:9px;flex-wrap:wrap;">
+              <sc-for list="{{ b.tags }}" as="t" hint-placeholder-count="4">
+                <span style="font-size:12.5px;font-weight:600;color:var(--text);padding:6px 13px;border-radius:999px;box-shadow:inset 2px 2px 5px var(--sh-dark),inset -2px -2px 5px var(--sh-light);">{{ t }}</span>
+              </sc-for>
+            </div>
+          </div>
+        </article>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="steps" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">HOW IT WORKS</div>
+    <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 40px;">3ステップで、書き出しまで。</h2>
+    <div data-3col="" style="display:grid;grid-template-columns:repeat(3,1fr);gap:22px;">
+      <div style="background:var(--bg);border-radius:22px;padding:32px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;"><span style="font-size:30px;font-weight:800;color:var(--accent);">01</span><span style="font-size:19px;font-weight:700;">選ぶ</span></div>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">作例ギャラリーから、つくりたい形に近いものをタップ。それが出発点になります。</p>
+      </div>
+      <div style="background:var(--bg);border-radius:22px;padding:32px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;"><span style="font-size:30px;font-weight:800;color:var(--accent);">02</span><span style="font-size:19px;font-weight:700;">調整</span></div>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">スライダーとトグルで自分好みに。迷ったら 🎲 ランダムで思いがけない形に出会えます。</p>
+      </div>
+      <div style="background:var(--bg);border-radius:22px;padding:32px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;"><span style="font-size:30px;font-weight:800;color:var(--accent);">03</span><span style="font-size:19px;font-weight:700;">書き出す</span></div>
+        <p style="color:var(--muted);font-size:14.5px;line-height:1.75;margin:0;">STL / STEP / PNG でダウンロード。印刷して、軸にそのまま挿せます。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="gallery" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">GALLERY</div>
+    <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 14px;">作例ギャラリー</h2>
+    <p style="color:var(--muted);font-size:16px;line-height:1.7;margin:0 0 40px;">気になる形をタップして、そのままジェネレーターへ。</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:18px;">
+      <sc-for list="{{ glyphs }}" as="g" hint-placeholder-count="16">
+        <a href="app/" style="text-decoration:none;color:inherit;background:var(--bg);border-radius:20px;padding:22px 16px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;box-shadow:-7px -7px 15px var(--sh-light),7px 7px 15px var(--sh-dark);transition:transform .16s;" style-hover="transform:translateY(-4px)">
+          <div style="width:84px;height:84px;border-radius:50%;display:grid;place-items:center;padding:19px;box-shadow:inset 4px 4px 9px var(--sh-dark),inset -4px -4px 9px var(--sh-light);">
+            <div style="width:100%;">{{ g.svg }}</div>
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;line-height:1.3;">{{ g.name }}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4;">{{ g.sub }}</div>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+  </section>
+
+  <section id="encoders" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">ENCODERS</div>
+    <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 14px;">お手持ちの部品で。</h2>
+    <p style="color:var(--muted);font-size:16px;line-height:1.7;max-width:54ch;margin:0 0 40px;">軸寸法はメーカー STEP から実測。公差はスライダーで微調整できます。</p>
+    <div data-2col="" style="display:grid;grid-template-columns:1fr 1fr;gap:22px;">
+      <div style="background:var(--bg);border-radius:22px;padding:32px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);display:flex;gap:22px;align-items:center;">
+        <div style="flex:none;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;padding:24px;box-shadow:inset 5px 5px 11px var(--sh-dark),inset -5px -5px 11px var(--sh-light);"><div style="width:100%;">{{ ec11 }}</div></div>
+        <div><h3 style="font-size:21px;font-weight:800;margin:0 0 4px;">ALPS EC11</h3><div style="font-size:13px;color:var(--accent);font-weight:600;margin-bottom:10px;">φ6 ・ Dカット軸</div><p style="color:var(--muted);font-size:14px;line-height:1.7;margin:0;">EC1110120005 に対応。平面（Dカット）の向きまで実寸でフィットします。</p></div>
+      </div>
+      <div style="background:var(--bg);border-radius:22px;padding:32px;box-shadow:-8px -8px 18px var(--sh-light),8px 8px 18px var(--sh-dark);display:flex;gap:22px;align-items:center;">
+        <div style="flex:none;width:96px;height:96px;border-radius:50%;display:grid;place-items:center;padding:24px;box-shadow:inset 5px 5px 11px var(--sh-dark),inset -5px -5px 11px var(--sh-light);"><div style="width:100%;">{{ ec12 }}</div></div>
+        <div><h3 style="font-size:21px;font-weight:800;margin:0 0 4px;">ALPS EC12E</h3><div style="font-size:13px;color:var(--accent);font-weight:600;margin-bottom:10px;">φ6 ・ 中空軸</div><p style="color:var(--muted);font-size:14px;line-height:1.7;margin:0;">EC12E085 に対応。中空軸の内径もカバー。嵌合クリアランスは調整可。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="story" style="max-width:1180px;margin:0 auto;padding:64px 24px;">
+    <div style="background:var(--bg);border-radius:30px;padding:clamp(32px,5vw,56px);box-shadow:-9px -9px 20px var(--sh-light),9px 9px 20px var(--sh-dark);">
+      <div style="font-size:12px;font-weight:700;letter-spacing:3px;color:var(--accent);margin-bottom:12px;">#まいにちのぶ</div>
+      <h2 style="font-size:clamp(26px,3.4vw,40px);font-weight:800;letter-spacing:-0.5px;line-height:1.2;margin:0 0 18px;">30日間、1日1ノブ。</h2>
+      <p style="color:var(--muted);font-size:16px;line-height:1.85;max-width:60ch;margin:0 0 32px;">毎日ひとつ機能を足して、その日の機能で作例をひとつ出して、X に投稿する。<strong style="color:var(--text);font-weight:700;">#まいにちのぶ</strong> の30日で、このジェネレーターは育ちました。開発の物語そのものが、いちばんの作例集です。</p>
+      <div style="display:flex;gap:14px;overflow-x:auto;padding:6px 2px 16px;margin-bottom:30px;">
+        <sc-for list="{{ days }}" as="d" hint-placeholder-count="8">
+          <div style="flex:none;width:104px;text-align:center;">
+            <div style="width:104px;height:104px;border-radius:20px;display:grid;place-items:center;padding:24px;box-shadow:inset 4px 4px 9px var(--sh-dark),inset -4px -4px 9px var(--sh-light);"><div style="width:100%;">{{ d.svg }}</div></div>
+            <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:9px;">Day {{ d.n }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;">
+        <a href="https://x.com/penomo" target="_blank" rel="noopener" style="text-decoration:none;color:#fff;background:var(--accent);font-weight:700;font-size:15px;padding:13px 24px;border-radius:14px;box-shadow:0 10px 24px var(--accent-soft);display:inline-flex;align-items:center;gap:9px;transition:transform .15s;" style-hover="transform:translateY(-2px)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M18.9 2H22l-7.6 8.7L23 22h-6.8l-5.3-7-6.1 7H1.7l8.1-9.3L1 2h7l4.8 6.4L18.9 2Zm-2.4 18h1.9L7.6 3.9H5.6L16.5 20Z"></path></svg>
+          @penomo をフォロー
+        </a>
+        <span style="font-size:13.5px;color:var(--muted);font-weight:500;">ハッシュタグ #まいにちのぶ で全アーカイブ</span>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width:1180px;margin:0 auto;padding:48px 24px 80px;">
+    <div style="text-align:center;background:var(--bg);border-radius:30px;padding:clamp(48px,7vw,80px) 24px;box-shadow:inset 8px 8px 20px var(--sh-dark),inset -8px -8px 20px var(--sh-light);">
+      <h2 style="font-size:clamp(30px,4.6vw,52px);font-weight:800;letter-spacing:-1px;line-height:1.15;margin:0 0 26px;">さあ、回す道具を作ろう。</h2>
+      <a href="app/" style="text-decoration:none;color:#fff;background:var(--accent);font-weight:700;font-size:17px;padding:17px 36px;border-radius:18px;box-shadow:0 14px 32px var(--accent-soft);display:inline-block;transition:transform .15s;" style-hover="transform:translateY(-2px)">ジェネレーターを開く →</a>
+      <div style="margin-top:24px;display:flex;gap:22px;justify-content:center;">
+        <a href="https://github.com/y-morishita-biz/everyday-knobs" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;" style-hover="color:var(--text)">GitHub</a>
+        <a href="https://x.com/penomo" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;font-size:14px;font-weight:600;" style-hover="color:var(--text)">X @penomo</a>
+      </div>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid color-mix(in oklab,var(--muted) 22%,transparent);">
+    <div style="max-width:1180px;margin:0 auto;padding:40px 24px;display:flex;gap:30px;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;">
+      <div style="max-width:280px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <span style="width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;box-shadow:inset 2px 2px 5px var(--sh-dark),inset -2px -2px 5px var(--sh-light);padding:6px;"><svg viewBox="0 0 100 100" width="100%" height="100%" fill="none"><circle cx="50" cy="50" r="30" stroke="var(--accent)" stroke-width="7"></circle><line x1="50" y1="22" x2="50" y2="34" stroke="var(--accent)" stroke-width="8" stroke-linecap="round"></line></svg></span>
+          <span style="font-weight:800;font-size:16px;">everyday knobs</span>
+        </div>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7;margin:0;">ブラウザで作る、ロータリーエンコーダ用ツマミ・ジェネレーター。</p>
+      </div>
+      <div style="display:flex;gap:48px;flex-wrap:wrap;">
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text);margin-bottom:2px;">プロダクト</div>
+          <a href="app/" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">ジェネレーター</a>
+          <a href="#steps" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">使い方</a>
+          <a href="#gallery" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">作例ギャラリー</a>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--text);margin-bottom:2px;">リンク</div>
+          <a href="https://github.com/y-morishita-biz/everyday-knobs" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">GitHub</a>
+          <a href="https://x.com/penomo" target="_blank" rel="noopener" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">X @penomo</a>
+          <a href="#story" style="color:var(--muted);text-decoration:none;font-size:13.5px;" style-hover="color:var(--accent)">#まいにちのぶ</a>
+        </div>
+      </div>
+    </div>
+    <div style="max-width:1180px;margin:0 auto;padding:18px 24px 36px;color:var(--muted);font-size:12px;">制作：penomo / dotting dots　・　技術：Replicad ・ Three.js ・ React</div>
+  </footer>
+
+</div></div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;accentTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;purple&quot;,&quot;teal&quot;,&quot;amber&quot;,&quot;coral&quot;,&quot;blue&quot;],&quot;default&quot;:&quot;purple&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.rootRef = React.createRef();
+    this._uid = 0;
+    this.order = ['purple','teal','amber','coral','blue'];
+    this.accents = { purple:'#9d7bff', teal:'#34b7a4', amber:'#e0a23a', coral:'#ff7a6b', blue:'#5b8def' };
+    const a = props && this.order.includes(props.accentTheme) ? props.accentTheme : 'purple';
+    this.state = { theme:'dark', accentKey:a };
+  }
+  applyVars(){
+    // Set tokens on <html> (the inheritance root) so consumers update as descendants.
+    // A custom-property change does NOT re-resolve an element's OWN inline var(),
+    // but descendants resolve correctly — so tokens must live on an ancestor.
+    const d = document.documentElement;
+    const lightTokens = { '--bg':'#e6e9f0', '--text':'#3f4458', '--muted':'#6d7286', '--sh-dark':'#c5c9d6', '--sh-light':'#ffffff' };
+    if(this.state.theme === 'light') Object.keys(lightTokens).forEach(k => d.style.setProperty(k, lightTokens[k]));
+    else Object.keys(lightTokens).forEach(k => d.style.removeProperty(k));
+    if(this.state.accentKey === 'purple'){
+      if(this.state.theme === 'light') d.style.setProperty('--accent', '#7c5cff');
+      else d.style.removeProperty('--accent');
+    } else {
+      d.style.setProperty('--accent', this.accents[this.state.accentKey]);
+    }
+  }
+  componentDidMount(){ this.applyVars(); }
+  componentDidUpdate(){ this.applyVars(); }
+  toggleTheme = () => this.setState(s => ({ theme: s.theme === 'dark' ? 'light' : 'dark' }));
+  setAccent = (k) => () => this.setState({ accentKey:k });
+
+  pt(r, aDeg){ const a = (aDeg - 90) * Math.PI / 180; return [50 + r*Math.cos(a), 50 + r*Math.sin(a)]; }
+  ticks(n, r1, r2, sw, slant){
+    const e = React.createElement, A = 'var(--accent)', out = [];
+    for(let i=0;i<n;i++){
+      const a = (i/n)*360;
+      const p1 = this.pt(r1,a), p2 = this.pt(r2, a + (slant||0));
+      out.push(e('line',{key:'t'+i, x1:p1[0], y1:p1[1], x2:p2[0], y2:p2[1], stroke:A, strokeWidth:sw||1.4, strokeLinecap:'round'}));
+    }
+    return out;
+  }
+  glyph(type){
+    const e = React.createElement, A = 'var(--accent)';
+    const uid = 'gx' + (this._uid++);
+    const c = (r, sw, extra) => e('circle', Object.assign({cx:50, cy:50, r, stroke:A, strokeWidth:sw||2, fill:'none'}, extra||{}));
+    const pointer = e('line',{x1:50, y1:21, x2:50, y2:33, stroke:A, strokeWidth:2.6, strokeLinecap:'round'});
+    const dot = (cy, r) => e('circle',{cx:50, cy:cy==null?27:cy, r:r||2.2, fill:A});
+    let kids;
+    switch(type){
+      case 'basic': kids=[c(30), c(21,1.1), pointer]; break;
+      case 'knurl': kids=[c(30)].concat(this.ticks(28,30,25,1.4), [c(19,1.1), pointer]); break;
+      case 'diamond': {
+        const hatch=[];
+        for(let k=-6;k<=6;k++){ const off=k*7;
+          hatch.push(e('line',{key:'d1'+k, x1:10+off, y1:10, x2:90+off, y2:90, stroke:A, strokeWidth:1}));
+          hatch.push(e('line',{key:'d2'+k, x1:10+off, y1:90, x2:90+off, y2:10, stroke:A, strokeWidth:1}));
+        }
+        kids=[ e('defs',{key:'df'}, e('clipPath',{id:uid}, e('circle',{cx:50,cy:50,r:27}))),
+               c(30), e('g',{key:'h', clipPath:'url(#'+uid+')', opacity:.8}, hatch), dot(50,2.4) ]; break;
+      }
+      case 'dish': kids=[c(33,1.1,{opacity:.5}), c(30), c(17,1.5), dot(50,2.1)]; break;
+      case 'flange': kids=[c(34,1.4,{opacity:.65}), c(28)].concat(this.ticks(24,28,23,1.4), [pointer]); break;
+      case 'hex': {
+        const pts=[]; for(let i=0;i<6;i++){ pts.push(this.pt(31, i*60).join(',')); }
+        kids=[e('polygon',{points:pts.join(' '), stroke:A, strokeWidth:2, fill:'none'}), c(17,1.1), pointer]; break;
+      }
+      case 'roundsquare': kids=[e('rect',{x:20,y:20,width:60,height:60,rx:16, stroke:A, strokeWidth:2, fill:'none'}), c(12,1.4), dot(50,2.1)]; break;
+      case 'helical': kids=[c(30)].concat(this.ticks(26,30,23,1.4,16), [c(17,1.1), pointer]); break;
+      case 'dome': kids=[c(30), c(22,1.1), c(12,1.1)].concat(this.ticks(28,30,25.5,1.2), [pointer]); break;
+      case 'coin': kids=[c(30,1.5), c(26,1.3), c(22,1.3), c(18,1.3), dot(50,2)]; break;
+      case 'scoop': {
+        const sc=[]; const n=14; for(let i=0;i<n;i++){ const p=this.pt(29,(i/n)*360); sc.push(e('circle',{key:'s'+i, cx:p[0], cy:p[1], r:4, stroke:A, strokeWidth:1.1, fill:'none'})); }
+        kids=[c(30)].concat(sc, [dot(50,2.1)]); break;
+      }
+      case 'chickenhead': kids=[ e('path',{d:'M50 19 C61 21 69 31 66 45 C64 55 58 64 50 70 C42 64 36 55 34 45 C31 31 39 21 50 19 Z', stroke:A, strokeWidth:2, fill:'none'}), e('line',{x1:50, y1:24, x2:50, y2:33, stroke:A, strokeWidth:2.4, strokeLinecap:'round'}) ]; break;
+      case 'lobed': {
+        const N=200, lobes=6, R=29, amp=5; let d='';
+        for(let i=0;i<=N;i++){ const a=(i/N)*2*Math.PI; const r=R-amp+amp*Math.cos(lobes*a); const x=50+r*Math.cos(a-Math.PI/2), y=50+r*Math.sin(a-Math.PI/2); d+=(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)+' '; }
+        d+='Z'; kids=[e('path',{d, stroke:A, strokeWidth:2, fill:'none'}), c(9,1.3), dot(50,2)]; break;
+      }
+      case 'barrel': kids=[e('ellipse',{cx:50, cy:50, rx:31, ry:29, stroke:A, strokeWidth:2, fill:'none'})].concat(this.ticks(22,30,24,1.4), [pointer]); break;
+      case 'dial': {
+        const sc=[]; const start=-130, end=130, n=21;
+        for(let i=0;i<n;i++){ const a=start+(end-start)*i/(n-1); const major=i%5===0; const p1=this.pt(30,a), p2=this.pt(major?23:26,a); sc.push(e('line',{key:'l'+i, x1:p1[0], y1:p1[1], x2:p2[0], y2:p2[1], stroke:A, strokeWidth:major?1.8:1, strokeLinecap:'round'})); }
+        kids=[c(20,1.5)].concat(sc, [pointer]); break;
+      }
+      case 'fullring': {
+        const sc=[]; const n=36; for(let i=0;i<n;i++){ const a=(i/n)*360; const major=i%9===0; const p1=this.pt(31,a), p2=this.pt(major?24:27,a); sc.push(e('line',{key:'f'+i, x1:p1[0], y1:p1[1], x2:p2[0], y2:p2[1], stroke:A, strokeWidth:major?1.8:1, strokeLinecap:'round'})); }
+        kids=[c(20,1.5)].concat(sc, [dot(50,2.1)]); break;
+      }
+      case 'print': {
+        const tp=[]; for(let i=0;i<5;i++){ tp.push(e('rect',{key:'p'+i, x:24+i*11, y:73, width:8, height:8, rx:2, stroke:A, strokeWidth:1.3, fill:'none'})); }
+        kids=[ c(27,1.8), e('circle',{cx:50, cy:44, r:10, stroke:A, strokeWidth:1.6, fill:'none'}), e('line',{x1:43, y1:39, x2:57, y2:39, stroke:A, strokeWidth:1.6}) ].concat(tp); break;
+      }
+      case 'share': kids=[ e('circle',{cx:50, cy:28, r:7, stroke:A, strokeWidth:2, fill:'none'}), e('circle',{cx:30, cy:66, r:7, stroke:A, strokeWidth:2, fill:'none'}), e('circle',{cx:70, cy:66, r:7, stroke:A, strokeWidth:2, fill:'none'}), e('line',{x1:46, y1:34, x2:34, y2:60, stroke:A, strokeWidth:1.8}), e('line',{x1:54, y1:34, x2:66, y2:60, stroke:A, strokeWidth:1.8}) ]; break;
+      case 'ec11': kids=[ c(28,1.8), e('path',{d:'M38 50 A12 12 0 1 1 62 50 L56 50 Z', stroke:A, strokeWidth:1.6, fill:'none'}), e('line',{x1:38, y1:36, x2:62, y2:36, stroke:A, strokeWidth:0}) ]; break;
+      case 'ec12': kids=[ c(28,1.8), c(13,1.6), c(7,1.4) ]; break;
+      default: kids=[c(30), pointer];
+    }
+    return e('svg',{viewBox:'0 0 100 100', width:'100%', height:'100%', fill:'none', style:{display:'block'}}, kids);
+  }
+  heroKnob(){
+    const e = React.createElement;
+    const A='var(--accent)', D='var(--accent-deep)', L='var(--accent-lite)';
+    const cx=110, cy=108, R=82;
+    const flutes=[]; const n=44;
+    for(let i=0;i<n;i++){ const a=(i/n)*2*Math.PI; const x1=cx+R*Math.cos(a), y1=cy+R*Math.sin(a), x2=cx+(R-13)*Math.cos(a), y2=cy+(R-13)*Math.sin(a); flutes.push(e('line',{key:'h'+i, x1, y1, x2, y2, stroke:'rgba(255,255,255,.22)', strokeWidth:2.4, strokeLinecap:'round'})); }
+    const pointer = e('rect',{x:cx-3.5, y:cy-R+9, width:7, height:34, rx:3.5, fill:'rgba(255,255,255,.92)'});
+    const spin = e('g',{className: this.props.reduceMotion ? '' : 'ek-spin', style:{transformOrigin:cx+'px '+cy+'px'}}, flutes.concat([pointer]));
+    return e('svg',{viewBox:'0 0 220 220', width:'100%', height:'100%', style:{display:'block', overflow:'visible'}},
+      e('defs',null,
+        e('radialGradient',{id:'hkBody', cx:'38%', cy:'30%', r:'82%'}, e('stop',{offset:'0%', stopColor:L}), e('stop',{offset:'52%', stopColor:A}), e('stop',{offset:'100%', stopColor:D})),
+        e('radialGradient',{id:'hkTop', cx:'40%', cy:'32%', r:'78%'}, e('stop',{offset:'0%', stopColor:L}), e('stop',{offset:'100%', stopColor:A})),
+        e('radialGradient',{id:'hkSh', cx:'50%', cy:'50%', r:'50%'}, e('stop',{offset:'0%', stopColor:'rgba(0,0,0,.32)'}), e('stop',{offset:'70%', stopColor:'rgba(0,0,0,.09)'}), e('stop',{offset:'100%', stopColor:'rgba(0,0,0,0)'}))
+      ),
+      e('ellipse',{cx:cx, cy:cy+R+12, rx:R*0.92, ry:15, fill:'url(#hkSh)'}),
+      e('circle',{cx, cy, r:R, fill:'url(#hkBody)'}),
+      spin,
+      e('circle',{cx, cy, r:R-16, fill:'url(#hkTop)'}),
+      e('circle',{cx, cy, r:R-16, fill:'none', stroke:'rgba(0,0,0,.12)', strokeWidth:2}),
+      e('circle',{cx, cy, r:R-30, fill:'none', stroke:'rgba(255,255,255,.16)', strokeWidth:1.5}),
+      e('ellipse',{cx:cx-22, cy:cy-26, rx:34, ry:22, fill:'rgba(255,255,255,.20)'})
+    );
+  }
+  buildGallery(){
+    const items=[
+      ['basic','ベーシック','丸・面取り・指標'],['knurl','ローレット円筒','縦溝28・面取り'],
+      ['diamond','綾目ダイヤ','ダイヤ目・ディンプル'],['dish','テーパー・ディッシュ','裾広・すり鉢・点'],
+      ['flange','フランジ台座','裾段・縦溝'],['hex','六角ボルト','六角・鋭角・面取り'],
+      ['roundsquare','角丸スクエア','四角・角丸・リセス'],['helical','ヘリカル・テーパー','斜め目・裾広'],
+      ['dome','ドームトップ','凸天面・縦溝'],['coin','コインエッジ','横溝・積層風'],
+      ['scoop','指スクープ','大スクープ・握り'],['chickenhead','チキンヘッド','指針型・面取りなし'],
+      ['lobed','花形ロブ','波型6山・リセス'],['barrel','バレルグリップ','樽型・縦溝'],
+      ['dial','目盛りダイヤル','弧目盛り・指標'],['fullring','リングダイヤル','全周目盛り']
+    ];
+    return items.map((it,i)=>({ key:it[0]+i, name:it[1], sub:it[2], svg:this.glyph(it[0]) }));
+  }
+  buildShowcase(){
+    const d=[
+      ['hex','本体形状','多彩な本体形状','丸・六角・角丸スクエア・花形ロブ・チキンヘッド・樽・くびれ。断面から指針まで、輪郭を自由に決められます。',['六角','花形ロブ','チキンヘッド','樽']],
+      ['knurl','テクスチャ','5種の側面テクスチャ','縦溝・ヘリカル・綾目ダイヤ・横溝・指スクープ。本数も深さもねじれ角も、指掛かりは思いのまま。',['縦溝','ヘリカル','綾目ダイヤ','スクープ']],
+      ['dome','天面・指標','天面と指標・目盛り','ドーム/すり鉢/リセス＋刻線、ダイヤル目盛りまで。回した位置がひと目で分かる据わりに。',['ドーム','すり鉢','刻線','目盛り']],
+      ['print','3Dプリント','印刷で実際に挿す','軸穴を実寸表示。公差テストピースを刷って一番いい段を選べば、本当に軸へ挿さります。',['実寸公差','テストピース','リードイン']],
+      ['share','共有・再現','共有して、再現する','URL を送るだけで同じ形。注文コード・プリセット・マイプリセットで、いつでも呼び戻せます。',['URL共有','注文コード','マイプリセット']]
+    ];
+    return d.map((x,i)=>({ key:x[0]+i, svg:this.glyph(x[0]), kicker:x[1], title:x[2], desc:x[3], tags:x[4] }));
+  }
+  buildDays(){
+    const d=[['04','dish'],['06','knurl'],['11','hex'],['15','dial'],['17','lobed'],['20','dome'],['25','coin'],['30','barrel']];
+    return d.map((x,i)=>({ key:x[1]+i, n:x[0], svg:this.glyph(x[1]) }));
+  }
+  renderVals(){
+    const swatches = this.order.map(k=>{
+      const col = this.accents[k];
+      const on = this.state.accentKey === k;
+      return {
+        key:k, click:this.setAccent(k),
+        style:{ width:'34px', height:'34px', borderRadius:'50%', border:'none', cursor:'pointer', background:'var(--bg)',
+          boxShadow: on ? ('0 0 0 2px '+col+', -3px -3px 7px var(--sh-light), 3px 3px 7px var(--sh-dark)') : ('-3px -3px 7px var(--sh-light), 3px 3px 7px var(--sh-dark)'),
+          display:'grid', placeItems:'center', transition:'box-shadow .2s' },
+        dot:{ width:'15px', height:'15px', borderRadius:'50%', background:col }
+      };
+    });
+    return {
+      rootRef: this.rootRef,
+      themeIcon: this.state.theme === 'dark' ? '☀' : '🌙',
+      toggleTheme: this.toggleTheme,
+      swatches,
+      hero: this.heroKnob(),
+      glyphs: this.buildGallery(),
+      showcase: this.buildShowcase(),
+      days: this.buildDays(),
+      ec11: this.glyph('ec11'),
+      ec12: this.glyph('ec12')
+    };
+  }
+}
+</script>
+</body>
+</html>
