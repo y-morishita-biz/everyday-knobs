@@ -94,16 +94,22 @@ function glyph(type) {
 }
 
 /* ---------- Populate repeated sections ---------- */
+// [glyphType, name, sub, presetId] — presetId deep-links into the generator
+// (app/#preset=<id>) and must match an id in app/src/cad/presets.ts.
 const GALLERY = [
-  ["basic", "ベーシック", "丸・面取り・指標"], ["knurl", "ローレット円筒", "縦溝28・面取り"],
-  ["diamond", "綾目ダイヤ", "ダイヤ目・ディンプル"], ["dish", "テーパー・ディッシュ", "裾広・すり鉢・点"],
-  ["flange", "フランジ台座", "裾段・縦溝"], ["hex", "六角ボルト", "六角・鋭角・面取り"],
-  ["roundsquare", "角丸スクエア", "四角・角丸・リセス"], ["helical", "ヘリカル・テーパー", "斜め目・裾広"],
-  ["dome", "ドームトップ", "凸天面・縦溝"], ["coin", "コインエッジ", "横溝・積層風"],
-  ["scoop", "指スクープ", "大スクープ・握り"], ["chickenhead", "チキンヘッド", "指針型・面取りなし"],
-  ["lobed", "花形ロブ", "波型6山・リセス"], ["barrel", "バレルグリップ", "樽型・縦溝"],
-  ["dial", "目盛りダイヤル", "弧目盛り・指標"], ["fullring", "リングダイヤル", "全周目盛り"],
+  ["basic", "ベーシック", "丸・面取り・指標", "basic"], ["knurl", "ローレット円筒", "縦溝28・面取り", "fluted"],
+  ["diamond", "綾目ダイヤ", "ダイヤ目・ディンプル", "diamond"], ["dish", "テーパー・ディッシュ", "裾広・すり鉢・点", "dish"],
+  ["flange", "フランジ台座", "裾段・縦溝", "flange"], ["hex", "六角ボルト", "六角・鋭角・面取り", "hex"],
+  ["roundsquare", "角丸スクエア", "四角・角丸・リセス", "square"], ["helical", "ヘリカル・テーパー", "斜め目・裾広", "helical"],
+  ["dome", "ドームトップ", "凸天面・縦溝", "dome"], ["coin", "コインエッジ", "横溝・積層風", "rings"],
+  ["scoop", "指スクープ", "大スクープ・握り", "scallop"], ["chickenhead", "チキンヘッド", "指針型・面取りなし", "chickenhead"],
+  ["lobed", "花形ロブ", "波型6山・リセス", "lobed"], ["barrel", "バレルグリップ", "樽型・縦溝", "barrel"],
+  ["dial", "目盛りダイヤル", "弧目盛り・指標", "dial"], ["fullring", "リングダイヤル", "全周目盛り", "fullring"],
 ];
+
+// Pre-baked hero meshes (site/assets/hero/<id>.json) — one is picked at random
+// each page load. Regenerate with app/bake-hero.ts.
+const HERO_KNOBS = ["basic", "fluted", "hex", "dome", "barrel", "lobed", "scallop", "fullring"];
 const SHOWCASE = [
   ["hex", "本体形状", "多彩な本体形状", "丸・六角・角丸スクエア・花形ロブ・チキンヘッド・樽・くびれ。断面から指針まで、輪郭を自由に決められます。", ["六角", "花形ロブ", "チキンヘッド", "樽"]],
   ["knurl", "テクスチャ", "5種の側面テクスチャ", "縦溝・ヘリカル・綾目ダイヤ・横溝・指スクープ。本数も深さもねじれ角も、指掛かりは思いのまま。", ["縦溝", "ヘリカル", "綾目ダイヤ", "スクープ"]],
@@ -114,8 +120,8 @@ const SHOWCASE = [
 const DAYS = [["04", "dish"], ["06", "knurl"], ["11", "hex"], ["15", "dial"], ["17", "lobed"], ["20", "dome"], ["25", "coin"], ["30", "barrel"]];
 
 function fillGallery() {
-  document.getElementById("gallery-grid").innerHTML = GALLERY.map(([t, name, sub]) => `
-    <a href="app/" class="card lift4" style="text-decoration:none; padding:22px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; border-radius:20px; box-shadow:-7px -7px 15px var(--sh-light), 7px 7px 15px var(--sh-dark);">
+  document.getElementById("gallery-grid").innerHTML = GALLERY.map(([t, name, sub, id]) => `
+    <a href="app/#preset=${id}" class="card lift4" style="text-decoration:none; padding:22px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:14px; border-radius:20px; box-shadow:-7px -7px 15px var(--sh-light), 7px 7px 15px var(--sh-dark);">
       <div style="width:84px; height:84px; border-radius:50%; display:grid; place-items:center; padding:19px; box-shadow:inset 4px 4px 9px var(--sh-dark), inset -4px -4px 9px var(--sh-light);">
         <div style="width:100%;">${glyph(t)}</div>
       </div>
@@ -217,7 +223,8 @@ async function initHero() {
     const tilt = new THREE.Group(); tilt.rotation.x = -Math.PI / 2; // Z-up(CAD) → Y-up
     spin.add(tilt); scene.add(spin);
 
-    const data = await fetch("./assets/hero-knob.json").then((r) => r.json());
+    const pick = HERO_KNOBS[Math.floor(Math.random() * HERO_KNOBS.length)];
+    const data = await fetch(`./assets/hero/${pick}.json`).then((r) => r.json());
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(data.positions, 3));
     g.setAttribute("normal", new THREE.Float32BufferAttribute(data.normals, 3));
