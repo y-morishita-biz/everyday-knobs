@@ -83,8 +83,6 @@ interface ControlsProps {
   params: KnobParams;
   onChange: (next: KnobParams) => void;
   busy: boolean;
-  busyLabel: string;
-  onExport: (format: "stl" | "step") => void;
   onExportFitTest: () => void;
   onSaveJson: () => void;
   onLoadFile: (file: File) => void;
@@ -106,8 +104,6 @@ interface ControlsProps {
   accent: string | null;
   onSetAccent: (hex: string | null) => void;
   onHelp: () => void;
-  error: string | null;
-  notice: string | null;
 }
 
 function Slider(props: {
@@ -188,8 +184,6 @@ export function Controls({
   params,
   onChange,
   busy,
-  busyLabel,
-  onExport,
   onExportFitTest,
   onSaveJson,
   onLoadFile,
@@ -211,8 +205,6 @@ export function Controls({
   accent,
   onSetAccent,
   onHelp,
-  error,
-  notice,
 }: ControlsProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [codeText, setCodeText] = useState("");
@@ -889,28 +881,6 @@ export function Controls({
           </button>
         </div>
       </Section>
-
-      <div className="dock">
-        <div className="dock__actions">
-          <button className="dock__btn" disabled={busy} onClick={() => onExport("stl")}>
-            STL
-          </button>
-          <button className="dock__btn" disabled={busy} onClick={() => onExport("step")}>
-            STEP
-          </button>
-          <button
-            className="dock__btn dock__btn--ghost"
-            onClick={onCopyLink}
-            aria-label="共有リンクをコピー"
-            title="共有リンクをコピー"
-          >
-            🔗
-          </button>
-        </div>
-        <div className={`status${busy ? " is-busy" : ""}`}>
-          {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
-        </div>
-      </div>
     </aside>
   );
 }

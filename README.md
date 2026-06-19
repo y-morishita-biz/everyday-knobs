@@ -4,6 +4,9 @@
 ブラウザ上で**パラメトリックに生成・プレビュー・STL/STEP エクスポート**するジェネレーター。
 サーバー不要のクライアントオンリー（Vite + React + TypeScript + Replicad/WASM + Three.js）。
 
+**🔗 公開サイト（ブラウザで今すぐ試す）: https://y-morishita-biz.github.io/everyday-knobs/**
+（ジェネレーター直リンク: <https://y-morishita-biz.github.io/everyday-knobs/app/>）
+
 ![everyday knobs](docs/img/hero.png)
 
 > 「**1日1ノブ**」— ジェネレーターに機能を1日1つ足し、その日の機能で作例ノブを1つ出し、
@@ -162,9 +165,7 @@ everyday-knobs/
 
 - **コード**：[MIT License](LICENSE)（© 2026 penomo / dotting dots）。自由に利用・改変・再配布可（著作権表示は保持）。
 - **生成物**：このツールで書き出した STL / STEP は**あなたのもの**。商用利用も含め自由に使えます。
-- **対象エンコーダ**：EC11 / EC12E はアルプスアルパイン社の製品です。寸法は同社公式 CAD を解析した
-  実測値で、**メーカー配布 CAD（STEP/PDF）は再配布の懸念を避け本リポジトリには同梱していません**
-  （[`reference/`](reference/) 参照、原データは ALPS 公式ページから入手）。
+- **対象エンコーダ**：EC11 / EC12E はアルプスアルパイン社の製品です。
 - **依存**：[Replicad](https://replicad.xyz/)（OpenCASCADE/WASM）・[Three.js](https://threejs.org/)・
   [React](https://react.dev/)・[Vite](https://vitejs.dev/)（各ライセンスに従う）。
 - **作者**：penomo（[@penomo](https://x.com/penomo)） — #まいにちのぶ
