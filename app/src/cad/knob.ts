@@ -24,22 +24,56 @@ import {
 } from "./params";
 
 /**
+ * Serrated / splined socket silhouette: a circle modulated into `teeth` rounded
+ * serrations of radial depth `toothDepth`. Used for insulated splined shafts.
+ * (cos-modulated radius — robust in OCCT, same idiom as the lobed body.)
+ */
+function serratedSocketDrawing(rOuter: number, teeth: number, toothDepth: number): Drawing {
+  const amp = toothDepth / 2;
+  const rMean = rOuter - amp;
+  const steps = Math.max(120, teeth * 12);
+  let pen: ReturnType<typeof draw> | null = null;
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * 2 * Math.PI;
+    const r = rMean + amp * Math.cos(teeth * a);
+    const pt: [number, number] = [Math.cos(a) * r, Math.sin(a) * r];
+    pen = pen ? pen.lineTo(pt) : draw(pt);
+  }
+  return pen!.close();
+}
+
+/**
  * Build the shaft socket as a 2D profile on the XY plane, then extrude it.
- * Round shaft -> a circle. D-cut shaft -> a circle with one side flattened.
+ * The cross-section is selected by the shaft's `socket` descriptor:
+ * round / D-cut (one flat) / double-flat / serrated (splined insulated shaft).
  */
 function buildShaftSocket(params: KnobParams, depth: number): Solid {
   const spec = SHAFTS[params.shaft];
-  const holeRadius = spec.outerDiameter / 2 + params.shaftClearance;
+  const cl = params.shaftClearance;
+  const holeRadius = spec.outerDiameter / 2 + cl;
+  const big = holeRadius * 4 + 10;
+  // A rectangle covering x > `flatAt`, rotated `deg` about the axis — cutting it
+  // flattens that side of the circle (clearance pushes the flat outward).
+  const flatCutter = (flatAt: number, deg: number) =>
+    drawRoundedRectangle(big, big).translate(flatAt + big / 2, 0).rotate(deg);
 
-  let profile = drawCircle(holeRadius);
-
-  if (spec.flatDistance !== undefined) {
-    // Flat face sits `flatDistance` from the axis (clearance pushes it outward).
-    const flatAt = spec.flatDistance + params.shaftClearance;
-    const big = holeRadius * 4 + 10;
-    // Rectangle covering the region x > flatAt; cutting it leaves a flat at x = flatAt.
-    const cutter = drawRoundedRectangle(big, big).translate(flatAt + big / 2, 0);
-    profile = profile.cut(cutter);
+  let profile: Drawing;
+  const sock = spec.socket;
+  switch (sock.kind) {
+    case "round":
+      profile = drawCircle(holeRadius);
+      break;
+    case "dcut":
+      profile = drawCircle(holeRadius).cut(flatCutter(sock.flatDistance + cl, 0));
+      break;
+    case "double-flat":
+      profile = drawCircle(holeRadius)
+        .cut(flatCutter(sock.flatDistance + cl, 0))
+        .cut(flatCutter(sock.flatDistance + cl, 180));
+      break;
+    case "serrated":
+      profile = serratedSocketDrawing(holeRadius, sock.teeth, sock.toothDepth);
+      break;
   }
 
   // Extrude slightly past the bottom face so the boolean cut is clean.

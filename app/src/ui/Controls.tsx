@@ -4,6 +4,7 @@ import { AppearanceMenu } from "./AppearanceMenu";
 import { PRESETS, type KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
+  socketFlatDistance,
   bulgeRange,
   clampParams,
   minBodyDiameter,
@@ -371,9 +372,11 @@ export function Controls({
         />
         <p className="hint">
           軸穴 実寸 φ{(SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance).toFixed(2)}
-          {SHAFTS[params.shaft].flatDistance !== undefined &&
-            ` ／ Dカット面 ${(SHAFTS[params.shaft].flatDistance! + params.shaftClearance).toFixed(2)}mm`}
+          {socketFlatDistance(SHAFTS[params.shaft]) !== undefined &&
+            ` ／ フラット面 ${(socketFlatDistance(SHAFTS[params.shaft])! + params.shaftClearance).toFixed(2)}mm`}
           （マイナス=きつめ圧入）。入口には0.5mmの挿入面取りが自動で付きます
+          {SHAFTS[params.shaft].provisional &&
+            "。※この軸は寸法暫定（メーカーSTEP実測待ち）です"}
         </p>
       </Section>
 
