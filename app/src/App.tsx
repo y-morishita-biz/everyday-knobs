@@ -226,8 +226,6 @@ export default function App() {
         params={params}
         onChange={setParams}
         busy={busy || exporting}
-        busyLabel={busyLabel}
-        onExport={handleExport}
         onExportFitTest={handleExportFitTest}
         onSaveJson={handleSaveJson}
         onLoadFile={handleLoadFile}
@@ -249,10 +247,43 @@ export default function App() {
         accent={accent}
         onSetAccent={setAccent}
         onHelp={() => setHelpOpen(true)}
-        error={error}
-        notice={notice}
       />
       <Viewer mesh={mesh} theme={theme} accent={accent} />
+      <div className="dock">
+        <div className="dock__actions">
+          <button
+            className="dock__btn"
+            disabled={busy || exporting}
+            onClick={() => handleExport("stl")}
+          >
+            STL
+          </button>
+          <button
+            className="dock__btn"
+            disabled={busy || exporting}
+            onClick={() => handleExport("step")}
+          >
+            STEP
+          </button>
+          <button
+            className="dock__btn dock__btn--ghost"
+            onClick={handleCopyLink}
+            aria-label="共有リンクをコピー"
+            title="共有リンクをコピー"
+          >
+            🔗
+          </button>
+        </div>
+        <div className={`status${busy || exporting ? " is-busy" : ""}`}>
+          {error
+            ? `⚠ ${error}`
+            : notice
+              ? `✓ ${notice}`
+              : busy || exporting
+                ? busyLabel
+                : "プレビュー更新済み"}
+        </div>
+      </div>
       <HelpOverlay open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
