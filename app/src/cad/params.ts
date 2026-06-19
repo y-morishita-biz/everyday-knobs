@@ -58,18 +58,19 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
     shaftProtrusion: 6.5,
     recommendedHoleDepth: 6,
   },
-  // EC12E2440301 — EC12E insulated (resin) shaft, low-profile / fiddly knob mount.
-  // PROVISIONAL placeholder dimensions until measured from the ALPS STEP
-  // (see reference/README.md → "EC12E2440301"). The serrated socket is a guess
-  // for the splined insulated shaft and will be finalised from the CAD.
+  // EC12E2440301 — EC12E insulated splined shaft, low-profile. Measured from the
+  // ALPS STEP (inch→mm): a 12-tooth serration, tip φ5.06 / root φ4.06 (~0.5mm
+  // tooth depth), ~6.2mm protrusion above a φ10 mounting boss. The knob presses
+  // onto the spline for anti-rotation — that's the "fiddly" mount.
   EC12E2440301: {
     id: "EC12E2440301",
-    label: "EC12E2440301 (絶縁軸・低背／準備中)",
-    outerDiameter: 6.0,
-    socket: { kind: "serrated", teeth: 20, toothDepth: 0.5 },
-    shaftProtrusion: 9,
-    recommendedHoleDepth: 7,
-    provisional: true,
+    label: "EC12E2440301 (絶縁スプライン軸・低背)",
+    outerDiameter: 5.06,
+    socket: { kind: "serrated", teeth: 12, toothDepth: 0.5 },
+    shaftProtrusion: 6.2,
+    bossDiameter: 10,
+    bossHeight: 2,
+    recommendedHoleDepth: 5,
   },
 };
 
