@@ -19,3 +19,11 @@ dist/
 # Logs & temp
 *.log
 .cache/
+
+# Secrets / env (誤コミット防止。クライアント側でも秘密情報は置かない)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.json
