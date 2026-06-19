@@ -893,8 +893,26 @@ export function Controls({
         </div>
       </Section>
 
-      <div className={`status${busy ? " is-busy" : ""}`}>
-        {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
+      <div className="dock">
+        <div className="dock__actions">
+          <button className="dock__btn" disabled={busy} onClick={() => onExport("stl")}>
+            STL
+          </button>
+          <button className="dock__btn" disabled={busy} onClick={() => onExport("step")}>
+            STEP
+          </button>
+          <button
+            className="dock__btn dock__btn--ghost"
+            onClick={onCopyLink}
+            aria-label="共有リンクをコピー"
+            title="共有リンクをコピー"
+          >
+            🔗
+          </button>
+        </div>
+        <div className={`status${busy ? " is-busy" : ""}`}>
+          {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
+        </div>
       </div>
     </aside>
   );
