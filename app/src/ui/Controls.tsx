@@ -398,9 +398,10 @@ export function Controls({
               key={s}
               className={`toggle__btn${params.bodyShape === s ? " is-active" : ""}`}
               aria-pressed={params.bodyShape === s}
+              title={BODY_SHAPE_LABELS[s]}
               onClick={() => set({ bodyShape: s })}
             >
-              {BODY_SHAPE_LABELS[s]}
+              {short(BODY_SHAPE_LABELS[s])}
             </button>
           ))}
         </div>
@@ -513,9 +514,10 @@ export function Controls({
               key={style}
               className={`toggle__btn${params.topEdgeStyle === style ? " is-active" : ""}`}
               aria-pressed={params.topEdgeStyle === style}
+              title={TOP_EDGE_LABELS[style]}
               onClick={() => set({ topEdgeStyle: style })}
             >
-              {TOP_EDGE_LABELS[style]}
+              {short(TOP_EDGE_LABELS[style])}
             </button>
           ))}
         </div>
@@ -536,9 +538,10 @@ export function Controls({
               key={style}
               className={`toggle__btn${params.topStyle === style ? " is-active" : ""}`}
               aria-pressed={params.topStyle === style}
+              title={TOP_STYLE_LABELS[style]}
               onClick={() => set({ topStyle: style })}
             >
-              {TOP_STYLE_LABELS[style]}
+              {short(TOP_STYLE_LABELS[style])}
             </button>
           ))}
         </div>
@@ -578,7 +581,7 @@ export function Controls({
       <Section
         {...sec("side")}
         title="側面"
-        help="指掛かりのテクスチャ（縦溝/ローレット/横溝/スクープ）と、裾のフランジ段。"
+        help="指掛かりのテクスチャ（縦溝=ローレット／斜め=ヘリカル／綾目=ダイヤ／横溝／スクープ）と、裾のフランジ段。"
         summary={`${short(TEXTURE_LABELS[params.surfaceTexture])}${params.skirt === "flange" ? "・フランジ" : ""}`}
       >
         <h3 className="subgroup__title">側面テクスチャ</h3>
@@ -588,9 +591,10 @@ export function Controls({
               key={tex}
               className={`toggle__btn${params.surfaceTexture === tex ? " is-active" : ""}`}
               aria-pressed={params.surfaceTexture === tex}
+              title={TEXTURE_LABELS[tex]}
               onClick={() => set({ surfaceTexture: tex })}
             >
-              {TEXTURE_LABELS[tex]}
+              {short(TEXTURE_LABELS[tex])}
             </button>
           ))}
         </div>
@@ -659,9 +663,10 @@ export function Controls({
               key={s}
               className={`toggle__btn${params.skirt === s ? " is-active" : ""}`}
               aria-pressed={params.skirt === s}
+              title={SKIRT_LABELS[s]}
               onClick={() => set({ skirt: s })}
             >
-              {SKIRT_LABELS[s]}
+              {short(SKIRT_LABELS[s])}
             </button>
           ))}
         </div>
@@ -700,9 +705,10 @@ export function Controls({
               key={type}
               className={`toggle__btn${params.indicator === type ? " is-active" : ""}`}
               aria-pressed={params.indicator === type}
+              title={INDICATOR_LABELS[type]}
               onClick={() => set({ indicator: type })}
             >
-              {INDICATOR_LABELS[type]}
+              {short(INDICATOR_LABELS[type])}
             </button>
           ))}
         </div>
@@ -829,19 +835,10 @@ export function Controls({
 
       <Section
         {...sec("export")}
-        title="書き出し・共有"
-        help="3Dデータ（STL/STEP）の書き出し、URL共有、JSON保存、メーカー向け注文コード。"
-        summary="STL / STEP / JSON / 注文コード"
+        title="共有・保存・注文"
+        help="URL共有、JSON保存/読込、メーカー向け注文コード。STL / STEP は下部の書き出しドックから。"
+        summary="URL / JSON / 注文コード"
       >
-        <h3 className="subgroup__title">3Dデータ書き出し</h3>
-        <div className="export">
-          <button disabled={busy} onClick={() => onExport("stl")}>
-            STL
-          </button>
-          <button disabled={busy} onClick={() => onExport("step")}>
-            STEP
-          </button>
-        </div>
         <h3 className="subgroup__title">共有リンク</h3>
         <button className="order-btn" onClick={onCopyLink}>
           🔗 共有リンクをコピー
@@ -893,8 +890,26 @@ export function Controls({
         </div>
       </Section>
 
-      <div className={`status${busy ? " is-busy" : ""}`}>
-        {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
+      <div className="dock">
+        <div className="dock__actions">
+          <button className="dock__btn" disabled={busy} onClick={() => onExport("stl")}>
+            STL
+          </button>
+          <button className="dock__btn" disabled={busy} onClick={() => onExport("step")}>
+            STEP
+          </button>
+          <button
+            className="dock__btn dock__btn--ghost"
+            onClick={onCopyLink}
+            aria-label="共有リンクをコピー"
+            title="共有リンクをコピー"
+          >
+            🔗
+          </button>
+        </div>
+        <div className={`status${busy ? " is-busy" : ""}`}>
+          {error ? `⚠ ${error}` : notice ? `✓ ${notice}` : busy ? busyLabel : "プレビュー更新済み"}
+        </div>
       </div>
     </aside>
   );
