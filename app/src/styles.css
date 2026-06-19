@@ -208,13 +208,16 @@ body {
 
 .toggle {
   display: flex;
-  flex-direction: column;
+  flex-flow: row wrap;
   gap: 8px;
 }
 
 .toggle__btn {
-  text-align: left;
-  padding: 10px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 9px 14px;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--panel-2);
