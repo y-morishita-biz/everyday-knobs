@@ -14,12 +14,15 @@ export type ShaftType = "EC11COMPAT" | "EC12E24404A8" | "EC12E1240301";
  * - dcut        … one flat face (ALPS φ6 D-cut metal shaft)
  * - double-flat … two opposing flats
  * - serrated    … splined / serrated insulated shaft (teeth around the bore)
+ * - hollow      … annular socket: knob caps over the φ outer AND a center post
+ *                 drops into the shaft's hollow bore (hollow-shaft mounting)
  */
 export type SocketProfile =
   | { kind: "round" }
   | { kind: "dcut"; flatDistance: number }
   | { kind: "double-flat"; flatDistance: number }
-  | { kind: "serrated"; teeth: number; toothDepth: number };
+  | { kind: "serrated"; teeth: number; toothDepth: number }
+  | { kind: "hollow"; boreDiameter: number };
 
 export interface ShaftSpec {
   id: ShaftType;
@@ -62,14 +65,16 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
     shaftProtrusion: 17,
     recommendedHoleDepth: 12,
   },
-  // EC12E1240301 — EC12E insulated hollow shaft, low-profile (round). From
-  // EC12E-085.step + outline drawing: outer φ6 (bushing φ6.6), bore φ3.1,
-  // ~6mm protrusion above a φ10 mounting boss. The knob caps over the φ6 outer.
+  // EC12E1240301 — EC12E insulated hollow shaft, low-profile. From EC12E-085.step,
+  // the outline drawing, and the supplied reference knobs (low_knob_a/b): the knob
+  // caps over the φ6 outer AND a center post drops into the φ3.1 bore for
+  // centering/retention — a "cap + center post" mount. (Anti-rotation ribs seen in
+  // the reference are not modelled yet.)
   EC12E1240301: {
     id: "EC12E1240301",
     label: "EC12E1240301 (絶縁中空軸・低背)",
     outerDiameter: 6.05,
-    socket: { kind: "round" },
+    socket: { kind: "hollow", boreDiameter: 3.1 },
     shaftProtrusion: 6.2,
     bossDiameter: 10,
     bossHeight: 2,

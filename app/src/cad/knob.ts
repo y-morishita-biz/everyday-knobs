@@ -74,6 +74,13 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
     case "serrated":
       profile = serratedSocketDrawing(holeRadius, sock.teeth, sock.toothDepth);
       break;
+    case "hollow": {
+      // Annular cavity: knob caps over the φ outer (holeRadius) and a center post
+      // (sized to the shaft bore minus clearance) drops into the hollow shaft.
+      const postR = Math.max(0.3, sock.boreDiameter / 2 - cl);
+      profile = drawCircle(holeRadius).cut(drawCircle(postR));
+      break;
+    }
   }
 
   // Extrude slightly past the bottom face so the boolean cut is clean.
@@ -559,8 +566,11 @@ export function buildKnob(params: KnobParams): Solid {
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   let result = body.cut(socket) as Solid;
-  // Insertion lead-in at the socket opening (bottom face).
-  result = result.cut(socketLeadIn(params, 0, 0, false)) as Solid;
+  // Insertion lead-in at the socket opening (bottom face). Skipped for hollow
+  // sockets: the filled lead-in cone would clip the center post.
+  if (SHAFTS[params.shaft].socket.kind !== "hollow") {
+    result = result.cut(socketLeadIn(params, 0, 0, false)) as Solid;
+  }
   return result;
 }
 

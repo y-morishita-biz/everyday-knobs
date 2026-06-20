@@ -22,7 +22,7 @@
 
 - **実装した機能**：軸穴モデルを一般化し、対応ロータリーエンコーダを**3機種に再編**。
   - **軸/ソケットモデルの一般化**（`app/src/cad/params.ts`）：`ShaftSpec.flatDistance` を廃し、
-    判別ユニオン `SocketProfile`（`round` / `dcut` / `double-flat` / `serrated`）へ。
+    判別ユニオン `SocketProfile`（`round` / `dcut` / `double-flat` / `serrated` / `hollow`）へ。
     低背メタデータ（`shaftProtrusion` / `bossDiameter` / `bossHeight` / `recommendedHoleDepth`）も追加。
   - **ソケット生成の分岐**（`app/src/cad/knob.ts`）：`buildShaftSocket` を `socket.kind` で分岐。
     二面取り（回転カッタ2枚）＋ローレット軸向けの**セレーション断面**（cos変調円・ロブ断面と
@@ -30,7 +30,10 @@
   - **対応エンコーダを3機種に再編**（提供STEP＋外形図を実測。EC12E-200=mm／EC12E-085=インチ）：
     - `EC11COMPAT`「EC11シリーズ互換」＝**φ6 ストレート・ローレット軸**（`serrated`）
     - `EC12E24404A8`「12型 絶縁軸・Dカット・背高」＝φ6 片面フラット（`dcut`、突出≈17mm）
-    - `EC12E1240301`「絶縁中空軸・丸・低背」＝φ6中空（`round`、ボアφ3.1・突出≈6.2mm・全高≈12mm）
+    - `EC12E1240301`「絶縁中空軸・低背」＝φ6中空（`hollow`、ボアφ3.1・突出≈6.2mm・全高≈12mm）。
+      提供ノブSTEP（low_knob_a/b）を実測し、取付は単純な丸穴でなく**外周キャップφ6.14＋中心ポストφ3.1**
+      の環状ソケットと判明 → 新種別 `socket.kind="hollow"`（環状を抜き中心にポストを残す）で再現。
+      ※回り止めリブ（4箇所）は未モデル（cap+postの核のみ）
     - 旧 `EC11`/`EC12E`/スプライン版 `EC12E2440301` を廃止。`DEFAULT_PARAMS`/`clampParams`/
       `random`/`presets` の軸IDも新IDへ更新（未公開のため互換は不問）。
   - **訂正**：当初 EC12E-085 STEP を「12歯スプライン」と誤読したが、外形図で**丸軸**と確定。
