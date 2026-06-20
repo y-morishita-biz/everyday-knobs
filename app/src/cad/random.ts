@@ -10,7 +10,7 @@ const rnd = (lo: number, hi: number, step = 1) =>
 export function randomParams(): KnobParams {
   const dia = rnd(14, 30);
   const draft: Partial<KnobParams> = {
-    shaft: pick(["EC11", "EC12E"]),
+    shaft: pick(["EC11COMPAT", "EC12E24404A8", "EC12E1240301"]),
     // Bias toward round; the exotic shapes still show up regularly.
     bodyShape: pick(["round", "round", "round", "polygon", "lobed", "pointer"]),
     polygonSides: rnd(3, 8),

@@ -4,7 +4,7 @@
 // reference/README.md. The knob's shaft socket (the negative shape cut from the
 // body) is derived from these values plus an independent clearance parameter.
 
-export type ShaftType = "EC11" | "EC12E" | "EC12E2440301";
+export type ShaftType = "EC11COMPAT" | "EC12E24404A8" | "EC12E1240301";
 
 /**
  * Cross-section of the shaft socket (the negative cut from the knob body).
@@ -40,33 +40,36 @@ export interface ShaftSpec {
 }
 
 export const SHAFTS: Record<ShaftType, ShaftSpec> = {
-  // EC1110120005 — EC11 metal shaft, φ6 with a single flat (D-cut), 4.5mm across flat.
-  EC11: {
-    id: "EC11",
-    label: "EC1110120005 (φ6 Dカット軸)",
+  // EC11-series-compatible straight knurled (serrated) φ6 shaft. The knob presses
+  // onto the serration for grip / anti-rotation. Modelled as a φ6 fine knurl;
+  // tooth pitch is adjustable from the printed fit test.
+  EC11COMPAT: {
+    id: "EC11COMPAT",
+    label: "EC11シリーズ互換 (φ6 ストレート・ローレット軸)",
     outerDiameter: 6.0,
-    socket: { kind: "dcut", flatDistance: 1.5 },
+    socket: { kind: "serrated", teeth: 20, toothDepth: 0.5 },
     shaftProtrusion: 15,
     recommendedHoleDepth: 12,
   },
-  // EC12E085 — EC12E hollow shaft. The knob caps over the φ6.05 outer cylinder.
-  EC12E: {
-    id: "EC12E",
-    label: "EC12E085 (φ6 中空軸)",
+  // EC12E24404A8 — 12mm insulated shaft, D-cut (one flat), standard height.
+  // From EC12E-200.STEP (mm): φ6 shaft, ~17mm protrusion. Flat ≈1.5mm from axis
+  // (AF 4.5, the φ6 D-cut standard) — verify against the part / fit test.
+  EC12E24404A8: {
+    id: "EC12E24404A8",
+    label: "EC12E24404A8 (12型 絶縁軸・Dカット)",
+    outerDiameter: 6.0,
+    socket: { kind: "dcut", flatDistance: 1.5 },
+    shaftProtrusion: 17,
+    recommendedHoleDepth: 12,
+  },
+  // EC12E1240301 — EC12E insulated hollow shaft, low-profile (round). From
+  // EC12E-085.step + outline drawing: outer φ6 (bushing φ6.6), bore φ3.1,
+  // ~6mm protrusion above a φ10 mounting boss. The knob caps over the φ6 outer.
+  EC12E1240301: {
+    id: "EC12E1240301",
+    label: "EC12E1240301 (絶縁中空軸・低背)",
     outerDiameter: 6.05,
     socket: { kind: "round" },
-    shaftProtrusion: 6.5,
-    recommendedHoleDepth: 6,
-  },
-  // EC12E2440301 — EC12E insulated splined shaft, low-profile. Measured from the
-  // ALPS STEP (inch→mm): a 12-tooth serration, tip φ5.06 / root φ4.06 (~0.5mm
-  // tooth depth), ~6.2mm protrusion above a φ10 mounting boss. The knob presses
-  // onto the spline for anti-rotation — that's the "fiddly" mount.
-  EC12E2440301: {
-    id: "EC12E2440301",
-    label: "EC12E2440301 (絶縁スプライン軸・低背)",
-    outerDiameter: 5.06,
-    socket: { kind: "serrated", teeth: 12, toothDepth: 0.5 },
     shaftProtrusion: 6.2,
     bossDiameter: 10,
     bossHeight: 2,
@@ -187,7 +190,7 @@ export type SkirtStyle = "none" | "flange";
 export type BodyShape = "round" | "polygon" | "lobed" | "pointer";
 
 export const DEFAULT_PARAMS: KnobParams = {
-  shaft: "EC11",
+  shaft: "EC11COMPAT",
   bodyShape: "round",
   polygonSides: 6,
   cornerRadius: 1,
@@ -388,7 +391,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : f;
 
   const p: KnobParams = {
-    shaft: pick(input.shaft, ["EC11", "EC12E", "EC12E2440301"], d.shaft),
+    shaft: pick(input.shaft, ["EC11COMPAT", "EC12E24404A8", "EC12E1240301"], d.shaft),
     bodyShape: pick(input.bodyShape, ["round", "polygon", "lobed", "pointer"], d.bodyShape),
     polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
     cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
