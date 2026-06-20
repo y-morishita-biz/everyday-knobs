@@ -80,13 +80,12 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
       const postR = Math.max(0.3, sock.boreDiameter / 2 - cl);
       let hollow = drawCircle(holeRadius).cut(drawCircle(postR));
       // Anti-rotation ribs: solid bridges left in the cavity (cut from the void)
-      // reaching inward from the cap wall to `innerDiameter`.
-      if (sock.ribs && sock.ribs.count > 0) {
+      // reaching inward from the cap wall to `innerDiameter`, one per angle.
+      if (sock.ribs && sock.ribs.angles.length > 0) {
         const ribInner = Math.max(postR + 0.2, sock.ribs.innerDiameter / 2 - cl);
         const ribOuter = holeRadius + 1; // overshoot past the cap edge
         const len = ribOuter - ribInner;
-        for (let i = 0; i < sock.ribs.count; i++) {
-          const ang = 90 + (360 / sock.ribs.count) * i; // first rib at top
+        for (const ang of sock.ribs.angles) {
           const rib = drawRoundedRectangle(len, sock.ribs.width)
             .translate(ribInner + len / 2, 0)
             .rotate(ang);

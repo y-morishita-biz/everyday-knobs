@@ -25,8 +25,11 @@ export type SocketProfile =
   | {
       kind: "hollow";
       boreDiameter: number;
-      /** Anti-rotation ribs bridging inward from the cap wall to `innerDiameter`. */
-      ribs?: { count: number; width: number; innerDiameter: number };
+      /**
+       * Anti-rotation ribs bridging inward from the cap wall to `innerDiameter`,
+       * one per entry in `angles` (degrees, 0 = +X, CCW).
+       */
+      ribs?: { angles: number[]; width: number; innerDiameter: number };
     };
 
 export interface ShaftSpec {
@@ -85,8 +88,9 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
       kind: "hollow",
       boreDiameter: 3.1,
       // Anti-rotation keys measured from the reference knob (low_knob_a/b):
-      // two ribs reaching inward to ~φ4.1, ~1.2mm wide.
-      ribs: { count: 2, width: 1.2, innerDiameter: 4.1 },
+      // two ribs in the upper half (≈52° & 128°, symmetric about +Y — an
+      // orientation key), reaching inward to ~φ4.1, ~1.0mm wide.
+      ribs: { angles: [52, 128], width: 1.0, innerDiameter: 4.1 },
     },
     shaftProtrusion: 6.2,
     bossDiameter: 10,
