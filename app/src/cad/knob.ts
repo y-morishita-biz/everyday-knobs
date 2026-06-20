@@ -619,14 +619,23 @@ export function buildFitTestPiece(params: KnobParams): Solid {
     }
   }
 
+  const isHollow = SHAFTS[params.shaft].socket.kind === "hollow";
+  const FLOOR = 0.5; // low-profile (hollow) pucks keep a floor so the center post stays attached
   for (let i = 0; i < clearances.length; i++) {
     const cx = i * pitch;
     const p = { ...params, shaftClearance: clearances[i] };
-    // Through-socket so the fit can be tested from either side and pushed out.
-    const socket = buildShaftSocket(p, H).translate([cx, 0, 0]) as Solid;
-    piece = (piece as Solid).cut(socket) as Solid;
-    piece = piece.cut(socketLeadIn(p, cx, H, true)) as Solid;
-    piece = piece.cut(socketLeadIn(p, cx, 0, false)) as Solid;
+    if (isHollow) {
+      // Blind socket: a 0.5mm floor joins the center post to the body (the
+      // through-cut used below would leave the post free-floating).
+      const socket = buildShaftSocket(p, H - FLOOR).translate([cx, 0, FLOOR + 0.1]) as Solid;
+      piece = (piece as Solid).cut(socket) as Solid;
+    } else {
+      // Through-socket so the fit can be tested from either side and pushed out.
+      const socket = buildShaftSocket(p, H).translate([cx, 0, 0]) as Solid;
+      piece = (piece as Solid).cut(socket) as Solid;
+      piece = piece.cut(socketLeadIn(p, cx, H, true)) as Solid;
+      piece = piece.cut(socketLeadIn(p, cx, 0, false)) as Solid;
+    }
     // i+1 tick marks along the front of the top face.
     for (let j = 0; j <= i; j++) {
       const tick = makeBaseBox(0.8, 2.5, 0.7).translate([
