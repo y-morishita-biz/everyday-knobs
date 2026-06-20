@@ -221,8 +221,8 @@ export const PRESETS: KnobPreset[] = [
     tickMajorEvery: 9,
     tickSpan: 360,
   }),
-  preset("ec12e", "中空軸スリム", "EC12E・細身・リセス", {
-    shaft: "EC12E",
+  preset("ec12e", "中空軸スリム", "EC12E1240301・細身・リセス", {
+    shaft: "EC12E1240301",
     bodyShape: "round",
     bodyDiameter: 16,
     topDiameter: 16,

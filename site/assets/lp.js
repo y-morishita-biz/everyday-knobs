@@ -88,6 +88,8 @@ function glyph(type) {
     case "share": k = `<circle cx="50" cy="28" r="7" stroke="${A}" stroke-width="2" fill="none"/><circle cx="30" cy="66" r="7" stroke="${A}" stroke-width="2" fill="none"/><circle cx="70" cy="66" r="7" stroke="${A}" stroke-width="2" fill="none"/><line x1="46" y1="34" x2="34" y2="60" stroke="${A}" stroke-width="1.8"/><line x1="54" y1="34" x2="66" y2="60" stroke="${A}" stroke-width="1.8"/>`; break;
     case "ec11": k = ci(28, 1.8) + `<path d="M38 50 A12 12 0 1 1 62 50 L56 50 Z" stroke="${A}" stroke-width="1.6" fill="none"/>`; break;
     case "ec12": k = ci(28, 1.8) + ci(13, 1.6) + ci(7, 1.4); break;
+    case "ec_knurl": k = ci(28, 1.8) + ticks(26, 28, 22, 1.2) + ci(8, 1.4); break;
+    case "ec_hollow": k = ci(28, 1.8) + ci(9, 1.6) + `<rect x="43.5" y="20" width="13" height="13" rx="1.5" stroke="${A}" stroke-width="1.4" fill="none"/>`; break;
     default: k = ci(30) + pointer;
   }
   return `<svg viewBox="0 0 100 100" width="100%" height="100%" fill="none" style="display:block">${k}</svg>`;
@@ -261,8 +263,9 @@ fillSwatches();
 fillGallery();
 fillShowcase();
 fillDays();
-document.getElementById("ec11-glyph").innerHTML = glyph("ec11");
-document.getElementById("ec12-glyph").innerHTML = glyph("ec12");
+document.getElementById("enc1-glyph").innerHTML = glyph("ec_knurl");
+document.getElementById("enc2-glyph").innerHTML = glyph("ec11");
+document.getElementById("enc3-glyph").innerHTML = glyph("ec_hollow");
 document.getElementById("theme-toggle").addEventListener("click", () => {
   theme = theme === "dark" ? "light" : "dark"; applyVars();
 });

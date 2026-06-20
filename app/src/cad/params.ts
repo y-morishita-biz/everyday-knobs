@@ -4,36 +4,112 @@
 // reference/README.md. The knob's shaft socket (the negative shape cut from the
 // body) is derived from these values plus an independent clearance parameter.
 
-export type ShaftType = "EC11" | "EC12E";
+export type ShaftType = "EC11COMPAT" | "EC12E24404A8" | "EC12E1240301";
+
+/**
+ * Cross-section of the shaft socket (the negative cut from the knob body).
+ * Generalised so richer shafts (insulated/splined, double-flat, low-profile)
+ * can be added without changing the body code.
+ * - round       … plain cylinder (knob caps over / fits onto a round shaft)
+ * - dcut        … one flat face (ALPS φ6 D-cut metal shaft)
+ * - double-flat … two opposing flats
+ * - serrated    … splined / serrated insulated shaft (teeth around the bore)
+ * - hollow      … annular socket: knob caps over the φ outer AND a center post
+ *                 drops into the shaft's hollow bore (hollow-shaft mounting)
+ */
+export type SocketProfile =
+  | { kind: "round" }
+  | { kind: "dcut"; flatDistance: number }
+  | { kind: "double-flat"; flatDistance: number }
+  | { kind: "serrated"; teeth: number; toothDepth: number }
+  | {
+      kind: "hollow";
+      boreDiameter: number;
+      /** Flat milled across the top of the center post (y, mm). Omit = full circle. */
+      postFlatY?: number;
+      /**
+       * Cap is cut flat at `key.topY`; a central anti-rotation key tongue of
+       * `key.width` hangs down from there to `key.bottomY` (an orientation key).
+       */
+      key?: { width: number; bottomY: number; topY: number };
+    };
 
 export interface ShaftSpec {
   id: ShaftType;
   label: string;
   /** Nominal shaft outer diameter the knob fits over (mm). */
   outerDiameter: number;
-  /**
-   * Distance from the shaft axis to the flat face for a D-cut shaft (mm).
-   * Undefined for a plain round shaft. EC11 φ6 with across-flat 4.5mm
-   * => flat face sits 1.5mm from the axis.
-   */
-  flatDistance?: number;
+  /** Socket cross-section to cut from the body. */
+  socket: SocketProfile;
+  /** Nominal shaft protrusion above the mounting face (mm). Informational. */
+  shaftProtrusion?: number;
+  /** Body boss the knob skirt must clear / cap over (mm). Informational. */
+  bossDiameter?: number;
+  bossHeight?: number;
+  /** Suggested default socket depth for this shaft (mm). */
+  recommendedHoleDepth?: number;
+  /** Locks the socket depth to a fixed value (mm) — the depth slider is hidden. */
+  fixedHoleDepth?: number;
+  /** Dimensions not yet confirmed from the manufacturer STEP (placeholder). */
+  provisional?: boolean;
 }
 
 export const SHAFTS: Record<ShaftType, ShaftSpec> = {
-  // EC1110120005 — EC11 metal shaft, φ6 with a single flat (D-cut), 4.5mm across flat.
-  EC11: {
-    id: "EC11",
-    label: "EC1110120005 (φ6 Dカット軸)",
+  // EC11-series-compatible straight knurled (serrated) φ6 shaft. The knob presses
+  // onto the serration for grip / anti-rotation. Modelled as a φ6 fine knurl;
+  // tooth pitch is adjustable from the printed fit test.
+  EC11COMPAT: {
+    id: "EC11COMPAT",
+    label: "EC11シリーズ互換 (φ6 ストレート・ローレット軸)",
     outerDiameter: 6.0,
-    flatDistance: 1.5,
+    socket: { kind: "serrated", teeth: 20, toothDepth: 0.5 },
+    shaftProtrusion: 15,
+    recommendedHoleDepth: 12,
   },
-  // EC12E085 — EC12E hollow shaft. The knob caps over the φ6.05 outer cylinder.
-  EC12E: {
-    id: "EC12E",
-    label: "EC12E085 (φ6 中空軸)",
+  // EC12E24404A8 — 12mm insulated shaft, D-cut (one flat), standard height.
+  // From EC12E-200.STEP (mm): φ6 shaft, ~17mm protrusion. Flat ≈1.5mm from axis
+  // (AF 4.5, the φ6 D-cut standard) — verify against the part / fit test.
+  EC12E24404A8: {
+    id: "EC12E24404A8",
+    label: "EC12E24404A8 (12型 絶縁軸・Dカット)",
+    outerDiameter: 6.0,
+    socket: { kind: "dcut", flatDistance: 1.5 },
+    shaftProtrusion: 17,
+    recommendedHoleDepth: 12,
+  },
+  // EC12E1240301 — EC12E insulated hollow shaft, low-profile. From EC12E-085.step,
+  // the outline drawing, and the supplied reference knobs (low_knob_a/b): the knob
+  // caps over the φ6 outer AND a center post drops into the φ3.1 bore for
+  // centering/retention — a "cap + center post" mount. (Anti-rotation ribs seen in
+  // the reference are not modelled yet.)
+  EC12E1240301: {
+    id: "EC12E1240301",
+    label: "EC12E1240301 (絶縁中空軸・低背)",
     outerDiameter: 6.05,
+    socket: {
+      kind: "hollow",
+      boreDiameter: 3.1,
+      // Socket profile traced from the reference knob (low_knob_a): a C-shaped
+      // cavity (cap φ6.14 cut flat at y=2.25) with a central key tongue
+      // (width 2.8, down to y=1.5) and a center post flat-topped at y=0.55.
+      postFlatY: 0.55,
+      key: { width: 2.8, bottomY: 1.5, topY: 2.25 },
+    },
+    shaftProtrusion: 6.2,
+    bossDiameter: 10,
+    bossHeight: 2,
+    recommendedHoleDepth: 2.55,
+    // The mount depth is fixed by the reference knob (socket Z 0.90–3.45).
+    fixedHoleDepth: 2.55,
   },
 };
+
+/** Flat-face distance for D-cut style sockets (mm), else undefined. */
+export function socketFlatDistance(spec: ShaftSpec): number | undefined {
+  return spec.socket.kind === "dcut" || spec.socket.kind === "double-flat"
+    ? spec.socket.flatDistance
+    : undefined;
+}
 
 export interface KnobParams {
   shaft: ShaftType;
@@ -141,7 +217,7 @@ export type SkirtStyle = "none" | "flange";
 export type BodyShape = "round" | "polygon" | "lobed" | "pointer";
 
 export const DEFAULT_PARAMS: KnobParams = {
-  shaft: "EC11",
+  shaft: "EC11COMPAT",
   bodyShape: "round",
   polygonSides: 6,
   cornerRadius: 1,
@@ -342,7 +418,7 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
     typeof v === "string" && (allowed as readonly string[]).includes(v) ? (v as T) : f;
 
   const p: KnobParams = {
-    shaft: pick(input.shaft, ["EC11", "EC12E"], d.shaft),
+    shaft: pick(input.shaft, ["EC11COMPAT", "EC12E24404A8", "EC12E1240301"], d.shaft),
     bodyShape: pick(input.bodyShape, ["round", "polygon", "lobed", "pointer"], d.bodyShape),
     polygonSides: cl(Math.round(num(input.polygonSides, d.polygonSides)), 3, 8),
     cornerRadius: Math.max(0, num(input.cornerRadius, d.cornerRadius)),
@@ -389,7 +465,11 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   const minDia = minBodyDiameter(p);
   p.bodyDiameter = Math.max(minDia, p.bodyDiameter);
   p.topDiameter = Math.max(minDia, p.topDiameter);
-  p.shaftHoleDepth = Math.min(p.shaftHoleDepth, maxShaftHoleDepth(p));
+  const fixedDepth = SHAFTS[p.shaft].fixedHoleDepth;
+  p.shaftHoleDepth = Math.min(
+    fixedDepth ?? p.shaftHoleDepth,
+    maxShaftHoleDepth(p),
+  );
   p.topEdgeSize = Math.min(p.topEdgeSize, maxTopEdgeSize(p));
   p.topRecessDepth = Math.min(
     p.topRecessDepth,

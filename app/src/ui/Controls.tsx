@@ -4,6 +4,7 @@ import { AppearanceMenu } from "./AppearanceMenu";
 import { PRESETS, type KnobPreset } from "../cad/presets";
 import {
   SHAFTS,
+  socketFlatDistance,
   bulgeRange,
   clampParams,
   minBodyDiameter,
@@ -353,14 +354,20 @@ export function Controls({
           ))}
         </div>
         <h3 className="subgroup__title">軸穴</h3>
-        <Slider
-          label="軸穴 深さ"
-          value={params.shaftHoleDepth}
-          min={2}
-          max={maxDepth}
-          step={1}
-          onChange={(v) => set({ shaftHoleDepth: v })}
-        />
+        {SHAFTS[params.shaft].fixedHoleDepth === undefined ? (
+          <Slider
+            label="軸穴 深さ"
+            value={params.shaftHoleDepth}
+            min={2}
+            max={maxDepth}
+            step={1}
+            onChange={(v) => set({ shaftHoleDepth: v })}
+          />
+        ) : (
+          <p className="hint">
+            この軸は取付形状に合わせて軸穴 深さを{SHAFTS[params.shaft].fixedHoleDepth}mmに固定しています
+          </p>
+        )}
         <Slider
           label="嵌合クリアランス"
           value={params.shaftClearance}
@@ -371,9 +378,11 @@ export function Controls({
         />
         <p className="hint">
           軸穴 実寸 φ{(SHAFTS[params.shaft].outerDiameter + 2 * params.shaftClearance).toFixed(2)}
-          {SHAFTS[params.shaft].flatDistance !== undefined &&
-            ` ／ Dカット面 ${(SHAFTS[params.shaft].flatDistance! + params.shaftClearance).toFixed(2)}mm`}
+          {socketFlatDistance(SHAFTS[params.shaft]) !== undefined &&
+            ` ／ フラット面 ${(socketFlatDistance(SHAFTS[params.shaft])! + params.shaftClearance).toFixed(2)}mm`}
           （マイナス=きつめ圧入）。入口には0.5mmの挿入面取りが自動で付きます
+          {SHAFTS[params.shaft].provisional &&
+            "。※この軸は寸法暫定（メーカーSTEP実測待ち）です"}
         </p>
       </Section>
 

@@ -24,22 +24,79 @@ import {
 } from "./params";
 
 /**
+ * Serrated / splined socket silhouette: a circle modulated into `teeth` rounded
+ * serrations of radial depth `toothDepth`. Used for insulated splined shafts.
+ * (cos-modulated radius — robust in OCCT, same idiom as the lobed body.)
+ */
+function serratedSocketDrawing(rOuter: number, teeth: number, toothDepth: number): Drawing {
+  const amp = toothDepth / 2;
+  const rMean = rOuter - amp;
+  const steps = Math.max(120, teeth * 12);
+  let pen: ReturnType<typeof draw> | null = null;
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * 2 * Math.PI;
+    const r = rMean + amp * Math.cos(teeth * a);
+    const pt: [number, number] = [Math.cos(a) * r, Math.sin(a) * r];
+    pen = pen ? pen.lineTo(pt) : draw(pt);
+  }
+  return pen!.close();
+}
+
+/**
  * Build the shaft socket as a 2D profile on the XY plane, then extrude it.
- * Round shaft -> a circle. D-cut shaft -> a circle with one side flattened.
+ * The cross-section is selected by the shaft's `socket` descriptor:
+ * round / D-cut (one flat) / double-flat / serrated (splined insulated shaft).
  */
 function buildShaftSocket(params: KnobParams, depth: number): Solid {
   const spec = SHAFTS[params.shaft];
-  const holeRadius = spec.outerDiameter / 2 + params.shaftClearance;
+  const cl = params.shaftClearance;
+  const holeRadius = spec.outerDiameter / 2 + cl;
+  const big = holeRadius * 4 + 10;
+  // A rectangle covering x > `flatAt`, rotated `deg` about the axis — cutting it
+  // flattens that side of the circle (clearance pushes the flat outward).
+  const flatCutter = (flatAt: number, deg: number) =>
+    drawRoundedRectangle(big, big).translate(flatAt + big / 2, 0).rotate(deg);
 
-  let profile = drawCircle(holeRadius);
-
-  if (spec.flatDistance !== undefined) {
-    // Flat face sits `flatDistance` from the axis (clearance pushes it outward).
-    const flatAt = spec.flatDistance + params.shaftClearance;
-    const big = holeRadius * 4 + 10;
-    // Rectangle covering the region x > flatAt; cutting it leaves a flat at x = flatAt.
-    const cutter = drawRoundedRectangle(big, big).translate(flatAt + big / 2, 0);
-    profile = profile.cut(cutter);
+  let profile: Drawing;
+  const sock = spec.socket;
+  switch (sock.kind) {
+    case "round":
+      profile = drawCircle(holeRadius);
+      break;
+    case "dcut":
+      profile = drawCircle(holeRadius).cut(flatCutter(sock.flatDistance + cl, 0));
+      break;
+    case "double-flat":
+      profile = drawCircle(holeRadius)
+        .cut(flatCutter(sock.flatDistance + cl, 0))
+        .cut(flatCutter(sock.flatDistance + cl, 180));
+      break;
+    case "serrated":
+      profile = serratedSocketDrawing(holeRadius, sock.teeth, sock.toothDepth);
+      break;
+    case "hollow": {
+      // Hollow-shaft mount traced from the reference knob: the cavity (void) is
+      // the cap circle minus a center post; a flat-topped cap leaves a C-shaped
+      // opening with a central key tongue, and the post is flat-topped too.
+      const big = holeRadius * 4 + 10;
+      const postR = Math.max(0.3, sock.boreDiameter / 2 - cl);
+      let post = drawCircle(postR);
+      if (sock.postFlatY !== undefined) {
+        post = post.cut(drawRoundedRectangle(big, big).translate(0, sock.postFlatY + big / 2));
+      }
+      let hollow = drawCircle(holeRadius);
+      if (sock.key) {
+        // Cut the cap flat at the key's top, then re-cut the central tongue down
+        // to its bottom (that strip stays as knob material = the anti-rotation key).
+        hollow = hollow.cut(drawRoundedRectangle(big, big).translate(0, sock.key.topY + big / 2));
+        const kh = sock.key.topY - sock.key.bottomY + big / 2;
+        hollow = hollow.cut(
+          drawRoundedRectangle(sock.key.width, kh).translate(0, sock.key.bottomY + kh / 2),
+        );
+      }
+      profile = hollow.cut(post);
+      break;
+    }
   }
 
   // Extrude slightly past the bottom face so the boolean cut is clean.
@@ -525,8 +582,11 @@ export function buildKnob(params: KnobParams): Solid {
   const depth = Math.min(params.shaftHoleDepth, maxShaftHoleDepth(params));
   const socket = buildShaftSocket(params, depth);
   let result = body.cut(socket) as Solid;
-  // Insertion lead-in at the socket opening (bottom face).
-  result = result.cut(socketLeadIn(params, 0, 0, false)) as Solid;
+  // Insertion lead-in at the socket opening (bottom face). Skipped for hollow
+  // sockets: the filled lead-in cone would clip the center post.
+  if (SHAFTS[params.shaft].socket.kind !== "hollow") {
+    result = result.cut(socketLeadIn(params, 0, 0, false)) as Solid;
+  }
   return result;
 }
 
@@ -559,14 +619,23 @@ export function buildFitTestPiece(params: KnobParams): Solid {
     }
   }
 
+  const isHollow = SHAFTS[params.shaft].socket.kind === "hollow";
+  const FLOOR = 0.5; // low-profile (hollow) pucks keep a floor so the center post stays attached
   for (let i = 0; i < clearances.length; i++) {
     const cx = i * pitch;
     const p = { ...params, shaftClearance: clearances[i] };
-    // Through-socket so the fit can be tested from either side and pushed out.
-    const socket = buildShaftSocket(p, H).translate([cx, 0, 0]) as Solid;
-    piece = (piece as Solid).cut(socket) as Solid;
-    piece = piece.cut(socketLeadIn(p, cx, H, true)) as Solid;
-    piece = piece.cut(socketLeadIn(p, cx, 0, false)) as Solid;
+    if (isHollow) {
+      // Blind socket: a 0.5mm floor joins the center post to the body (the
+      // through-cut used below would leave the post free-floating).
+      const socket = buildShaftSocket(p, H - FLOOR).translate([cx, 0, FLOOR + 0.1]) as Solid;
+      piece = (piece as Solid).cut(socket) as Solid;
+    } else {
+      // Through-socket so the fit can be tested from either side and pushed out.
+      const socket = buildShaftSocket(p, H).translate([cx, 0, 0]) as Solid;
+      piece = (piece as Solid).cut(socket) as Solid;
+      piece = piece.cut(socketLeadIn(p, cx, H, true)) as Solid;
+      piece = piece.cut(socketLeadIn(p, cx, 0, false)) as Solid;
+    }
     // i+1 tick marks along the front of the top face.
     for (let j = 0; j <= i; j++) {
       const tick = makeBaseBox(0.8, 2.5, 0.7).translate([
