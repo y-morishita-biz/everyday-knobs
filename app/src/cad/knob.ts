@@ -78,7 +78,22 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
       // Annular cavity: knob caps over the φ outer (holeRadius) and a center post
       // (sized to the shaft bore minus clearance) drops into the hollow shaft.
       const postR = Math.max(0.3, sock.boreDiameter / 2 - cl);
-      profile = drawCircle(holeRadius).cut(drawCircle(postR));
+      let hollow = drawCircle(holeRadius).cut(drawCircle(postR));
+      // Anti-rotation ribs: solid bridges left in the cavity (cut from the void)
+      // reaching inward from the cap wall to `innerDiameter`.
+      if (sock.ribs && sock.ribs.count > 0) {
+        const ribInner = Math.max(postR + 0.2, sock.ribs.innerDiameter / 2 - cl);
+        const ribOuter = holeRadius + 1; // overshoot past the cap edge
+        const len = ribOuter - ribInner;
+        for (let i = 0; i < sock.ribs.count; i++) {
+          const ang = 90 + (360 / sock.ribs.count) * i; // first rib at top
+          const rib = drawRoundedRectangle(len, sock.ribs.width)
+            .translate(ribInner + len / 2, 0)
+            .rotate(ang);
+          hollow = hollow.cut(rib);
+        }
+      }
+      profile = hollow;
       break;
     }
   }

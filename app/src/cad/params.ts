@@ -22,7 +22,12 @@ export type SocketProfile =
   | { kind: "dcut"; flatDistance: number }
   | { kind: "double-flat"; flatDistance: number }
   | { kind: "serrated"; teeth: number; toothDepth: number }
-  | { kind: "hollow"; boreDiameter: number };
+  | {
+      kind: "hollow";
+      boreDiameter: number;
+      /** Anti-rotation ribs bridging inward from the cap wall to `innerDiameter`. */
+      ribs?: { count: number; width: number; innerDiameter: number };
+    };
 
 export interface ShaftSpec {
   id: ShaftType;
@@ -38,6 +43,8 @@ export interface ShaftSpec {
   bossHeight?: number;
   /** Suggested default socket depth for this shaft (mm). */
   recommendedHoleDepth?: number;
+  /** Locks the socket depth to a fixed value (mm) — the depth slider is hidden. */
+  fixedHoleDepth?: number;
   /** Dimensions not yet confirmed from the manufacturer STEP (placeholder). */
   provisional?: boolean;
 }
@@ -74,11 +81,19 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
     id: "EC12E1240301",
     label: "EC12E1240301 (絶縁中空軸・低背)",
     outerDiameter: 6.05,
-    socket: { kind: "hollow", boreDiameter: 3.1 },
+    socket: {
+      kind: "hollow",
+      boreDiameter: 3.1,
+      // Anti-rotation keys measured from the reference knob (low_knob_a/b):
+      // two ribs reaching inward to ~φ4.1, ~1.2mm wide.
+      ribs: { count: 2, width: 1.2, innerDiameter: 4.1 },
+    },
     shaftProtrusion: 6.2,
     bossDiameter: 10,
     bossHeight: 2,
-    recommendedHoleDepth: 5,
+    recommendedHoleDepth: 2.55,
+    // The mount depth is fixed by the reference knob (socket Z 0.90–3.45).
+    fixedHoleDepth: 2.55,
   },
 };
 
@@ -443,7 +458,11 @@ export function clampParams(input: Partial<KnobParams>): KnobParams {
   const minDia = minBodyDiameter(p);
   p.bodyDiameter = Math.max(minDia, p.bodyDiameter);
   p.topDiameter = Math.max(minDia, p.topDiameter);
-  p.shaftHoleDepth = Math.min(p.shaftHoleDepth, maxShaftHoleDepth(p));
+  const fixedDepth = SHAFTS[p.shaft].fixedHoleDepth;
+  p.shaftHoleDepth = Math.min(
+    fixedDepth ?? p.shaftHoleDepth,
+    maxShaftHoleDepth(p),
+  );
   p.topEdgeSize = Math.min(p.topEdgeSize, maxTopEdgeSize(p));
   p.topRecessDepth = Math.min(
     p.topRecessDepth,

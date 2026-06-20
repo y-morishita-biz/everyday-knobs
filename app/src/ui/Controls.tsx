@@ -354,14 +354,20 @@ export function Controls({
           ))}
         </div>
         <h3 className="subgroup__title">軸穴</h3>
-        <Slider
-          label="軸穴 深さ"
-          value={params.shaftHoleDepth}
-          min={2}
-          max={maxDepth}
-          step={1}
-          onChange={(v) => set({ shaftHoleDepth: v })}
-        />
+        {SHAFTS[params.shaft].fixedHoleDepth === undefined ? (
+          <Slider
+            label="軸穴 深さ"
+            value={params.shaftHoleDepth}
+            min={2}
+            max={maxDepth}
+            step={1}
+            onChange={(v) => set({ shaftHoleDepth: v })}
+          />
+        ) : (
+          <p className="hint">
+            この軸は取付形状に合わせて軸穴 深さを{SHAFTS[params.shaft].fixedHoleDepth}mmに固定しています
+          </p>
+        )}
         <Slider
           label="嵌合クリアランス"
           value={params.shaftClearance}
