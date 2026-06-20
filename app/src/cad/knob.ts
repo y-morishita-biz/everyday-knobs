@@ -75,24 +75,26 @@ function buildShaftSocket(params: KnobParams, depth: number): Solid {
       profile = serratedSocketDrawing(holeRadius, sock.teeth, sock.toothDepth);
       break;
     case "hollow": {
-      // Annular cavity: knob caps over the φ outer (holeRadius) and a center post
-      // (sized to the shaft bore minus clearance) drops into the hollow shaft.
+      // Hollow-shaft mount traced from the reference knob: the cavity (void) is
+      // the cap circle minus a center post; a flat-topped cap leaves a C-shaped
+      // opening with a central key tongue, and the post is flat-topped too.
+      const big = holeRadius * 4 + 10;
       const postR = Math.max(0.3, sock.boreDiameter / 2 - cl);
-      let hollow = drawCircle(holeRadius).cut(drawCircle(postR));
-      // Anti-rotation ribs: solid bridges left in the cavity (cut from the void)
-      // reaching inward from the cap wall to `innerDiameter`, one per angle.
-      if (sock.ribs && sock.ribs.angles.length > 0) {
-        const ribInner = Math.max(postR + 0.2, sock.ribs.innerDiameter / 2 - cl);
-        const ribOuter = holeRadius + 1; // overshoot past the cap edge
-        const len = ribOuter - ribInner;
-        for (const ang of sock.ribs.angles) {
-          const rib = drawRoundedRectangle(len, sock.ribs.width)
-            .translate(ribInner + len / 2, 0)
-            .rotate(ang);
-          hollow = hollow.cut(rib);
-        }
+      let post = drawCircle(postR);
+      if (sock.postFlatY !== undefined) {
+        post = post.cut(drawRoundedRectangle(big, big).translate(0, sock.postFlatY + big / 2));
       }
-      profile = hollow;
+      let hollow = drawCircle(holeRadius);
+      if (sock.key) {
+        // Cut the cap flat at the key's top, then re-cut the central tongue down
+        // to its bottom (that strip stays as knob material = the anti-rotation key).
+        hollow = hollow.cut(drawRoundedRectangle(big, big).translate(0, sock.key.topY + big / 2));
+        const kh = sock.key.topY - sock.key.bottomY + big / 2;
+        hollow = hollow.cut(
+          drawRoundedRectangle(sock.key.width, kh).translate(0, sock.key.bottomY + kh / 2),
+        );
+      }
+      profile = hollow.cut(post);
       break;
     }
   }

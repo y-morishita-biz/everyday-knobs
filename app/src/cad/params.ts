@@ -25,11 +25,13 @@ export type SocketProfile =
   | {
       kind: "hollow";
       boreDiameter: number;
+      /** Flat milled across the top of the center post (y, mm). Omit = full circle. */
+      postFlatY?: number;
       /**
-       * Anti-rotation ribs bridging inward from the cap wall to `innerDiameter`,
-       * one per entry in `angles` (degrees, 0 = +X, CCW).
+       * Cap is cut flat at `key.topY`; a central anti-rotation key tongue of
+       * `key.width` hangs down from there to `key.bottomY` (an orientation key).
        */
-      ribs?: { angles: number[]; width: number; innerDiameter: number };
+      key?: { width: number; bottomY: number; topY: number };
     };
 
 export interface ShaftSpec {
@@ -87,10 +89,11 @@ export const SHAFTS: Record<ShaftType, ShaftSpec> = {
     socket: {
       kind: "hollow",
       boreDiameter: 3.1,
-      // Anti-rotation keys measured from the reference knob (low_knob_a/b):
-      // two ribs in the upper half (≈52° & 128°, symmetric about +Y — an
-      // orientation key), reaching inward to ~φ4.1, ~1.0mm wide.
-      ribs: { angles: [52, 128], width: 1.0, innerDiameter: 4.1 },
+      // Socket profile traced from the reference knob (low_knob_a): a C-shaped
+      // cavity (cap φ6.14 cut flat at y=2.25) with a central key tongue
+      // (width 2.8, down to y=1.5) and a center post flat-topped at y=0.55.
+      postFlatY: 0.55,
+      key: { width: 2.8, bottomY: 1.5, topY: 2.25 },
     },
     shaftProtrusion: 6.2,
     bossDiameter: 10,
