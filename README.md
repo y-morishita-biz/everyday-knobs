@@ -175,6 +175,11 @@ everyday-knobs/
 - **コード**：[MIT License](LICENSE)（© 2026 penomo / dotting dots）。自由に利用・改変・再配布可（著作権表示は保持）。
 - **生成物**：このツールで書き出した STL / STEP は**あなたのもの**。商用利用も含め自由に使えます。
 - **対象エンコーダ**：EC11 / EC12E シリーズはアルプスアルパイン社の製品です。
-- **依存**：[Replicad](https://replicad.xyz/)（OpenCASCADE/WASM）・[Three.js](https://threejs.org/)・
-  [React](https://react.dev/)・[Vite](https://vitejs.dev/)（各ライセンスに従う）。
+- **依存ライブラリ**：[React](https://react.dev/)・[Three.js](https://threejs.org/)・
+  [Replicad](https://replicad.xyz/)・[Vite](https://vitejs.dev/)（MIT）、
+  [comlink](https://github.com/GoogleChromeLabs/comlink)（Apache-2.0）。
+  CADカーネルは **OpenCASCADE Technology（LGPL-2.1 + OCCT例外）** を
+  [opencascade.js](https://github.com/donalffons/opencascade.js)（`replicad-opencascadejs`）経由で
+  **未改変のまま**利用しています。各ライブラリのライセンス条項に従います（詳細は
+  [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)）。
 - **作者**：penomo（[@penomo](https://x.com/penomo)） — #まいにちのぶ
