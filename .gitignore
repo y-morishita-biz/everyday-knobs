@@ -16,6 +16,9 @@ desktop.ini
 node_modules/
 dist/
 
+# 展示用サンプルの書き出し（8MB超。app/bake-samples.ts でいつでも再生成できる）
+samples/
+
 # Logs & temp
 *.log
 .cache/
